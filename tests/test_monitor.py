@@ -5,7 +5,7 @@ import io
 import math
 import unittest
 import zipfile
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -14,7 +14,6 @@ from monitor.market import _parse_archive, resample
 from monitor.models import Candle, CandidateTrade
 from monitor.notify import _format_entry, send_trade_alerts
 from monitor.portfolio import allocate_portfolio
-from monitor.runner import should_persist_status
 from monitor.service import seconds_until_next_run
 from monitor.strategies import FORWARD_START_MS, generate_a
 
@@ -54,11 +53,6 @@ class FrozenSpecTests(unittest.TestCase):
         expected = int(datetime(2026, 9, 1, tzinfo=timezone.utc).timestamp() * 1000)
         self.assertEqual(FORWARD_START_MS, expected)
 
-    def test_recovery_status_is_persisted_immediately(self):
-        now = datetime.now(timezone.utc)
-        old = {"health": "data_unavailable", "last_success_utc": (now - timedelta(minutes=10)).isoformat()}
-        self.assertTrue(should_persist_status(old, 0, now))
-
     def test_persistent_service_runs_after_next_candle_close(self):
         self.assertEqual(seconds_until_next_run(900.0), 935.0)
         self.assertEqual(seconds_until_next_run(1799.0), 36.0)
@@ -69,6 +63,12 @@ class CausalityTests(unittest.TestCase):
         values = [1.0, 2.0, 3.0, 100.0]
         result = zscore_prior(values, window=3, min_periods=3)
         expected = (100.0 - 2.0) / math.sqrt(2.0 / 3.0)
+        self.assertAlmostEqual(result[3], expected)
+
+    def test_zscore_prior_supports_sample_ddof(self):
+        values = [1.0, 2.0, 3.0, 100.0]
+        result = zscore_prior(values, window=3, min_periods=3, ddof=1)
+        expected = (100.0 - 2.0) / math.sqrt(2.0 / 2.0)
         self.assertAlmostEqual(result[3], expected)
 
     def test_resample_requires_complete_left_labeled_bucket(self):

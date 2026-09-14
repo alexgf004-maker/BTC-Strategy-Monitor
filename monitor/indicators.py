@@ -42,15 +42,20 @@ def rolling_median_prior(values: list[float], window: int, min_periods: int) -> 
     return out
 
 
-def zscore_prior(values: list[float], window: int, min_periods: int) -> list[float]:
-    """Population z-score against prior values; current value is excluded."""
+def zscore_prior(values: list[float], window: int, min_periods: int, ddof: int = 0) -> list[float]:
+    """Z-score against prior values; current value is excluded.
+
+    ddof=0 (default) is population std, spec-mandated for C's 672-bar
+    z-score. ddof=1 is sample std, used for A/D's 168-bar z-score since
+    the spec is silent there and sample std is the more common default.
+    """
     out = [NAN] * len(values)
     for i, value in enumerate(values):
         sample = values[max(0, i - window):i]
         if len(sample) < min_periods:
             continue
         mean = sum(sample) / len(sample)
-        variance = sum((x - mean) ** 2 for x in sample) / len(sample)
+        variance = sum((x - mean) ** 2 for x in sample) / (len(sample) - ddof)
         std = math.sqrt(variance)
         if std > 0:
             out[i] = (value - mean) / std
@@ -164,8 +169,11 @@ def enrich(candles: list[Candle]) -> dict[str, list[float]]:
         "ema200": ema(closes, 200),
         "atr": atr,
         "adx": wilder_adx(candles, 14),
-        "ntr_z_168": zscore_prior(counts, 168, 72),
-        "ntr_z_672": zscore_prior(counts, 672, 288),
+        # A/D signal thresholds (e.g. 3.9362322227) are unspecified re: std
+        # convention, so this uses the common default (sample std).
+        "ntr_z_168": zscore_prior(counts, 168, 72, ddof=1),
+        # C's spec explicitly mandates population std.
+        "ntr_z_672": zscore_prior(counts, 672, 288, ddof=0),
         "volume_mean_20": rolling_mean_prior(volumes, 20, 10),
         "count_mean_20": rolling_mean_prior(counts, 20, 10),
         "compression": compression,
