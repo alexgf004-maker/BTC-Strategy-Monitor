@@ -10,7 +10,7 @@
   "event_count": 10,
   "health": "delayed_official_archive",
   "implementation_status": "spec_reconstruction_unverified_against_missing_canonical_dataset",
-  "last_success_utc": "2026-09-14T01:09:40.358942Z",
+  "last_success_utc": "2026-09-14T02:27:19.331216Z",
   "market": "Binance USD-M Futures BTCUSDT",
   "mode": "paper",
   "new_event_count": 0,
