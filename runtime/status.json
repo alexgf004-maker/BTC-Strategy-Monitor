@@ -1,16 +1,16 @@
 {
   "bars": {
-    "15m": 13141,
+    "15m": 13142,
     "1h": 3285,
     "4h": 821
   },
   "data_source": "binance_futures_realtime",
-  "data_through_utc": "2026-09-14T21:14:59.999000Z",
+  "data_through_utc": "2026-09-14T21:29:59.999000Z",
   "data_warning": null,
   "event_count": 10,
   "health": "ok",
   "implementation_status": "spec_reconstruction_unverified_against_missing_canonical_dataset",
-  "last_success_utc": "2026-09-14T21:18:11.695388Z",
+  "last_success_utc": "2026-09-14T21:33:11.405409Z",
   "market": "Binance USD-M Futures BTCUSDT",
   "mode": "paper",
   "new_event_count": 0,
