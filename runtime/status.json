@@ -1,19 +1,19 @@
 {
   "bars": {
-    "15m": 13058,
-    "1h": 3264,
-    "4h": 816
+    "15m": 12960,
+    "1h": 3240,
+    "4h": 810
   },
-  "data_through_utc": "2026-09-14T00:29:59.999000Z",
-  "error": "No Binance USD-M Futures endpoint was reachable: https://fapi.binance.com/fapi/v1/klines: HTTPError; https://fapi1.binance.com/fapi/v1/klines: JSONDecodeError; https://fapi2.binance.com/fapi/v1/klines: JSONDecodeError; https://fapi3.binance.com/fapi/v1/klines: JSONDecodeError",
+  "data_source": "binance_vision_official_delayed",
+  "data_through_utc": "2026-09-12T23:59:59.999000Z",
+  "data_warning": "No Binance USD-M Futures endpoint was reachable: https://fapi.binance.com/fapi/v1/klines: HTTPError; https://fapi1.binance.com/fapi/v1/klines: JSONDecodeError; https://fapi2.binance.com/fapi/v1/klines: JSONDecodeError; https://fapi3.binance.com/fapi/v1/klines: JSONDecodeError",
   "event_count": 10,
-  "health": "data_unavailable",
+  "health": "delayed_official_archive",
   "implementation_status": "spec_reconstruction_unverified_against_missing_canonical_dataset",
-  "last_attempt_utc": "2026-09-14T00:56:15.765678Z",
-  "last_success_utc": "2026-09-14T00:44:26.611689Z",
+  "last_success_utc": "2026-09-14T01:09:40.358942Z",
   "market": "Binance USD-M Futures BTCUSDT",
   "mode": "paper",
-  "new_event_count": 10,
+  "new_event_count": 0,
   "open_positions": [],
   "real_orders_enabled": false,
   "realized_equity": 781.24182101,
