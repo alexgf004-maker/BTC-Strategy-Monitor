@@ -17,7 +17,8 @@ Consulta únicamente velas públicas de Binance USD-M Futures, reconstruye los m
 ## Archivos importantes
 
 - `strategy_suite_v1_FINAL.json`: especificación congelada e inmutable.
-- `monitor/engine.py`: datos, indicadores, señales, simulación y riesgo.
+- `monitor/market.py`, `monitor/indicators.py` y `monitor/strategies.py`: datos, indicadores y señales.
+- `monitor/portfolio.py`: simulación paper y gestor de riesgo.
 - `monitor/runner.py`: ejecución idempotente y escritura de resultados.
 - `runtime/forward_events.csv`: registro paper acumulado y reproducible.
 - `runtime/status.json`: último estado confirmado.

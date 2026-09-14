@@ -5,13 +5,14 @@ import io
 import math
 import unittest
 import zipfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from monitor.indicators import zscore_prior
 from monitor.market import _parse_archive, resample
 from monitor.models import Candle, CandidateTrade
 from monitor.portfolio import allocate_portfolio
+from monitor.runner import should_persist_status
 from monitor.strategies import FORWARD_START_MS, generate_a
 
 
@@ -49,6 +50,11 @@ class FrozenSpecTests(unittest.TestCase):
     def test_forward_start_is_exact(self):
         expected = int(datetime(2026, 9, 1, tzinfo=timezone.utc).timestamp() * 1000)
         self.assertEqual(FORWARD_START_MS, expected)
+
+    def test_recovery_status_is_persisted_immediately(self):
+        now = datetime.now(timezone.utc)
+        old = {"health": "data_unavailable", "last_success_utc": (now - timedelta(minutes=10)).isoformat()}
+        self.assertTrue(should_persist_status(old, 0, now))
 
 
 class CausalityTests(unittest.TestCase):

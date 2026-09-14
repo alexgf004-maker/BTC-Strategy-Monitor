@@ -72,6 +72,8 @@ def write_notification(new_rows: list[dict], data_through: str) -> None:
 def should_persist_status(old: dict, new_event_count: int, now: datetime) -> bool:
     if new_event_count:
         return True
+    if old.get("health") not in ("ok", "delayed_official_archive"):
+        return True
     previous = old.get("last_success_utc")
     if not previous:
         return True
