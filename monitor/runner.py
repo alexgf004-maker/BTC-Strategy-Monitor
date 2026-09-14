@@ -25,8 +25,8 @@ NEW_EVENTS = RUNTIME / "new_events.md"
 EXPECTED_SPEC_SHA = "5c601cfb71993c09bd6c512108cb20c5a85f785d2800298a014f77afad29c908"
 FIELDNAMES = [
     "event_id", "event_dt", "event_type", "strategy", "side", "signal_dt", "entry_dt", "exit_dt",
-    "entry_price", "exit_price", "R", "planned_risk_frac", "planned_risk_dollars", "equity_after",
-    "sr_context", "status", "reason", "volume_ratio", "count_ratio", "taker_share",
+    "entry_price", "exit_price", "stop", "target", "R", "planned_risk_frac", "planned_risk_dollars",
+    "equity_after", "sr_context", "status", "reason", "volume_ratio", "count_ratio", "taker_share",
 ]
 
 
