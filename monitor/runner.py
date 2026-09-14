@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .market import DataUnavailable, fetch_15m, resample
 from .models import iso
-from .notify import send_entry_alerts
+from .notify import send_trade_alerts
 from .portfolio import allocate_portfolio
 from .strategies import generate_candidates
 
@@ -124,7 +124,7 @@ def main() -> int:
     new_rows = [row for row in portfolio.events if row["event_id"] not in old_ids]
     data_through = iso(candles_15m[-1].close_time)
     write_notification(new_rows, data_through)
-    send_entry_alerts(new_rows)
+    send_trade_alerts(new_rows)
 
     status = {
         "suite_id": "BTCUSDT_Strategy_Suite_v1.0_FINAL",
