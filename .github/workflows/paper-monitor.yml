@@ -1,0 +1,66 @@
+name: BTC paper monitor
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "runtime/**"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: btc-paper-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run safety and engine tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Evaluate closed candles
+        id: monitor
+        continue-on-error: true
+        run: python -m monitor.runner
+
+      - name: Open one notification for new events
+        if: hashFiles('runtime/new_events.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title=$(head -n 1 runtime/new_events.md | sed 's/^# //')
+          gh issue create --title "$title" --body-file runtime/new_events.md --label paper-signal || \
+            gh issue create --title "$title" --body-file runtime/new_events.md
+          rm -f runtime/new_events.md
+
+      - name: Persist paper registry and health
+        run: |
+          rm -f runtime/new_events.md runtime/run_result.json
+          git config user.name "btc-paper-monitor[bot]"
+          git config user.email "btc-paper-monitor[bot]@users.noreply.github.com"
+          git add runtime/
+          if git diff --cached --quiet; then
+            echo "No tracked state changes."
+          else
+            git commit -m "chore: update paper monitor state [skip ci]"
+            git push
+          fi
+
+      - name: Fail workflow after state is preserved
+        if: steps.monitor.outcome == 'failure'
+        run: exit 1

@@ -1,0 +1,191 @@
+{
+  "suite_id": "BTCUSDT_Strategy_Suite_v1.0_FINAL",
+  "freeze_date_utc": "2026-09-13",
+  "historical_data_cutoff_utc": "2026-08-31T23:45:00Z",
+  "forward_oos_start_utc": "2026-09-01T00:00:00Z",
+  "market": "Binance USD-M Futures BTCUSDT",
+  "canonical_base_interval": "15m",
+  "historical_fee_model": {
+    "roundtrip_fraction": 0.0024
+  },
+  "engines": {
+    "A_PBME_v1.0": {
+      "interval": "1h",
+      "side": "long",
+      "signal": [
+        "ret3=(close/close.shift(3)-1) > 0.015",
+        "NumberTrades z-score > 3.9362322227 using prior 168 bars excluding current, min_periods=72",
+        "close > EMA200",
+        "close > open"
+      ],
+      "entry": "next 1h open",
+      "atr": "Wilder ATR14 on signal bar",
+      "stop": "entry - 1.5 ATR",
+      "checkpoint": "close of sixth entry bar; if close < entry, exit at checkpoint close; if passed, no later checkpoint",
+      "max_hold": "60h, final bar index entry+59",
+      "execution": "one active; conservative intrabar stop; gap-through stop filled at open",
+      "authoritative_tradebook": "1h_stage23_base_trades.csv"
+    },
+    "B_ReclaimQ60_v1.0": {
+      "interval": "4h",
+      "side": "long",
+      "signal": [
+        "close > EMA50",
+        "EMA20 > EMA50",
+        "previous low < previous EMA10 - 0.25*previous ATR14",
+        "current close > EMA10",
+        "current close > current open"
+      ],
+      "entry": "next 4h open",
+      "D_struct": "(next-entry-open - (min low of signal and prior 3 bars - 0.25*signal ATR))/signal ATR",
+      "D_struct_max": 1.702619,
+      "stop": "entry - 2.5 ATR(signal)",
+      "target": "entry + 3.75 ATR(signal) = 1.5R",
+      "max_hold": "30 x 4h bars",
+      "execution": "one active; stop-first intrabar",
+      "authoritative_tradebook": "stage41b_q60_tradebook_full.csv"
+    },
+    "C_Momentum15_Mid_v1.0": {
+      "interval": "15m",
+      "side": "long",
+      "signal": [
+        "NumberTrades z-score > 5 using prior 672 bars excluding current, min_periods=288, population std",
+        "ADX14 Wilder > 28",
+        "close_location=(close-low)/(high-low) > 0.65",
+        "normalized_OBV_slope16 > 4",
+        "at least one of prior 4 bars has NumberTrades z-score > 1",
+        "taker_buy_volume/volume > 0.52"
+      ],
+      "normalized_OBV_slope16_exact": "OBV=cumsum(sign(close_t-close_t-1)*volume_t); slope16=(OBV_t-OBV_t-16)/mean(volume_t-15..t)",
+      "explicitly_not_in_mid": [
+        "EMA20 > EMA50",
+        "ret4 > 0.3%"
+      ],
+      "entry": "next 15m open",
+      "atr": "Wilder ATR14 on signal bar",
+      "stop": "entry - 3.5 ATR",
+      "target": "entry + 10.5 ATR = 3R",
+      "max_hold": "32 entry bars = 8h; time exit at final-bar close",
+      "execution": "one active; signal on prior trade exit bar is eligible after that exit; stop-first; gap stop/target at open",
+      "reconstruction_validation": {
+        "trades": 100,
+        "signal_matches": 100,
+        "entry_matches": 100,
+        "exit_matches": 100,
+        "reason_matches": 100,
+        "max_abs_R_error": 4.440892098500626e-16
+      },
+      "authoritative_tradebook": "stage67_candidateC_mid_tradebook.csv"
+    },
+    "D_ExpansionShort93_v1.0": {
+      "interval": "1h",
+      "side": "short",
+      "features": [
+        "ATR14 Wilder",
+        "atrp=ATR/close",
+        "compression=atrp / median(prior 168 atrp excluding current, min_periods=72)",
+        "tr_ratio=true_range/ATR14",
+        "NumberTrades z-score using prior168 excluding current, min_periods=72"
+      ],
+      "signal": [
+        "compression[t-2] < 0.70",
+        "tr_ratio[t-1] > 1.25",
+        "tr_ratio[t] > 1.25",
+        "ntr_z[t] > 1",
+        "close[t] < open[t]"
+      ],
+      "entry": "next 1h open",
+      "stop": "entry + 2 ATR(signal)",
+      "target": "entry - 4 ATR(signal) = 2R",
+      "max_hold": "48h",
+      "execution": "one active; stop-first",
+      "authoritative_tradebook": "stage108_best_parsimonious_tradebook.csv"
+    }
+  },
+  "sr_context": {
+    "id": "B_4H_support_touch2or3_v1.0",
+    "applies_to": "B_ReclaimQ60_v1.0 only",
+    "resample": "4h UTC left-closed/left-labeled",
+    "pivot": "strict pivot low: low[i] lower than each of prior 3 and next 3 lows",
+    "pivot_availability": "pivot at i becomes known after 3 right bars",
+    "zone": "level \u00b1 0.25*ATR14",
+    "decisive_break": "close < level - 0.35*ATR14 terminates support episode",
+    "touch_dedup": "successive interactions with same level require at least 3 bars",
+    "market_episode_dedup": "collapse all levels at same event timestamp first; touch_n=max",
+    "qualifying_touch": [
+      2,
+      3
+    ],
+    "event_availability": "event bar close = event_dt + 4h",
+    "B_decision_context_window": "latest qualifying support availability within prior 12h of B decision",
+    "authoritative_historical_result": {
+      "n": 25,
+      "win_rate": 0.8,
+      "PF": 6.47824,
+      "mean_R": 0.75735,
+      "sum_R": 18.93364,
+      "p_delta_year_stratified": 0.00204,
+      "p_PF_year_stratified": 0.00126
+    }
+  },
+  "risk_manager": {
+    "equity_basis": "current realized equity at decision timestamp",
+    "risk_unit": "planned dollar loss at stop, not position notional",
+    "targets": {
+      "A": 0.0075,
+      "B": 0.005,
+      "B_when_authoritative_SR": 0.00625,
+      "C": 0.0075,
+      "D": 0.005
+    },
+    "global_open_planned_stop_risk_cap": 0.02,
+    "A_plus_C_shared_cap": 0.0125,
+    "same_timestamp_priority": [
+      "C",
+      "D",
+      "B",
+      "A"
+    ],
+    "carried_positions": "retain original entry risk dollars; open-risk fraction therefore changes with realized equity",
+    "new_trade_cap_action": "scale to remaining dollar-risk capacity; skip only if capacity is zero",
+    "historical_base_exact": {
+      "start_equity": 800,
+      "final_equity": 3136.1424902187523,
+      "multiple": 3.9201781127734403,
+      "max_closed_trade_DD": -0.08275062277234602
+    },
+    "historical_with_B_SR_0625": {
+      "final_equity": 3210.732962,
+      "multiple": 4.0134162025,
+      "max_closed_trade_DD": -0.08275062277234602,
+      "max_open_planned_risk_fraction": 0.01875
+    },
+    "status": "FROZEN for forward test"
+  },
+  "volume_microstructure": {
+    "status": "telemetry_only_not_filter",
+    "fields": [
+      "volume_ratio_4h",
+      "count_ratio_4h",
+      "taker_buy_share"
+    ],
+    "reason": "incremental historical evidence insufficient after B+S/R context"
+  },
+  "macro": {
+    "status": "telemetry_shadow_not_filter",
+    "events": [
+      "FOMC",
+      "CPI",
+      "NFP",
+      "PCE_when_calendar_added"
+    ],
+    "CPI_post_6h_flag": "record on C trades, do not veto",
+    "reason": "macro strongly changes volatility; strategy-specific samples too small to justify frozen entry veto"
+  },
+  "forward_test_policy": {
+    "start": "2026-09-01T00:00:00Z",
+    "rule": "No parameter, filter, threshold, S/R definition, or risk target may be changed using forward outcomes and then still be called v1.0.",
+    "changes": "Any change creates a new version and v1.0 continues as untouched benchmark.",
+    "execution_phase": "shadow/paper first; live only after operational validation"
+  }
+}
