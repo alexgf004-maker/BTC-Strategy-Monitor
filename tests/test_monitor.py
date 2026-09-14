@@ -12,7 +12,7 @@ from unittest.mock import patch
 from monitor.indicators import zscore_prior
 from monitor.market import _parse_archive, resample
 from monitor.models import Candle, CandidateTrade
-from monitor.notify import send_entry_alerts
+from monitor.notify import send_trade_alerts
 from monitor.portfolio import allocate_portfolio
 from monitor.runner import should_persist_status
 from monitor.service import seconds_until_next_run
@@ -139,20 +139,23 @@ class TelegramAlertTests(unittest.TestCase):
             {"event_type": "ENTRY", "strategy": "A", "side": "long", "entry_price": 100.0,
              "event_dt": "2026-09-01T00:00:00Z", "planned_risk_frac": 0.005, "planned_risk_dollars": 4.0},
             {"event_type": "EXIT", "strategy": "A", "side": "long", "entry_price": 100.0,
+             "exit_price": 101.5, "R": 0.75, "equity_after": 806.0, "reason": "target",
              "event_dt": "2026-09-01T01:00:00Z", "planned_risk_frac": "", "planned_risk_dollars": ""},
+            {"event_type": "SKIP", "strategy": "A", "side": "long", "entry_price": 100.0,
+             "event_dt": "2026-09-01T02:00:00Z", "planned_risk_frac": 0.0, "planned_risk_dollars": 0.0},
         ]
 
     @patch.dict("os.environ", {}, clear=True)
     @patch("monitor.notify.urllib.request.urlopen")
     def test_no_alert_without_credentials(self, urlopen):
-        send_entry_alerts(self._rows())
+        send_trade_alerts(self._rows())
         urlopen.assert_not_called()
 
     @patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"}, clear=True)
     @patch("monitor.notify.urllib.request.urlopen")
-    def test_alert_sent_only_for_entries(self, urlopen):
-        send_entry_alerts(self._rows())
-        self.assertEqual(urlopen.call_count, 1)
+    def test_alert_sent_for_entries_and_exits_but_not_skips(self, urlopen):
+        send_trade_alerts(self._rows())
+        self.assertEqual(urlopen.call_count, 2)
 
 
 if __name__ == "__main__":
