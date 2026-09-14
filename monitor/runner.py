@@ -17,7 +17,7 @@ from .strategies import generate_candidates
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNTIME = ROOT / "runtime"
+RUNTIME = Path(os.environ.get("BTC_RUNTIME_DIR", str(ROOT / "runtime"))).expanduser()
 SPEC = ROOT / "strategy_suite_v1_FINAL.json"
 STATUS = RUNTIME / "status.json"
 EVENTS = RUNTIME / "forward_events.csv"

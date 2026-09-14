@@ -15,6 +15,7 @@ from monitor.models import Candle, CandidateTrade
 from monitor.notify import send_entry_alerts
 from monitor.portfolio import allocate_portfolio
 from monitor.runner import should_persist_status
+from monitor.service import seconds_until_next_run
 from monitor.strategies import FORWARD_START_MS, generate_a
 
 
@@ -57,6 +58,10 @@ class FrozenSpecTests(unittest.TestCase):
         now = datetime.now(timezone.utc)
         old = {"health": "data_unavailable", "last_success_utc": (now - timedelta(minutes=10)).isoformat()}
         self.assertTrue(should_persist_status(old, 0, now))
+
+    def test_persistent_service_runs_after_next_candle_close(self):
+        self.assertEqual(seconds_until_next_run(900.0), 935.0)
+        self.assertEqual(seconds_until_next_run(1799.0), 36.0)
 
 
 class CausalityTests(unittest.TestCase):
