@@ -1,22 +1,22 @@
 {
   "bars": {
-    "15m": 13149,
-    "1h": 3287,
-    "4h": 821
+    "15m_closed": 13150,
+    "1h_closed": 3287,
+    "4h_closed": 821
   },
   "data_source": "binance_futures_realtime",
-  "data_through_utc": "2026-09-14T23:14:59.999000Z",
+  "data_through_utc": "2026-09-14T23:29:59.999000Z",
   "data_warning": null,
   "event_count": 10,
   "health": "ok",
-  "implementation_status": "spec_reconstruction_unverified_against_missing_canonical_dataset",
-  "last_success_utc": "2026-09-14T23:22:13.216333Z",
+  "implementation_status": "canonical_signal_tradebooks_reproduced_live_allocator_causal",
+  "last_success_utc": "2026-09-14T23:32:12.421885Z",
   "market": "Binance USD-M Futures BTCUSDT",
   "mode": "paper",
   "new_event_count": 0,
   "open_positions": [],
   "real_orders_enabled": false,
-  "realized_equity": 781.24182101,
+  "realized_equity": 780.15494084,
   "spec_sha256": "5c601cfb71993c09bd6c512108cb20c5a85f785d2800298a014f77afad29c908",
   "start_equity": 800.0,
   "suite_id": "BTCUSDT_Strategy_Suite_v1.0_FINAL"
