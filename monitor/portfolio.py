@@ -29,6 +29,8 @@ def _base_event(event_type: str, trade: CandidateTrade) -> dict:
         "exit_dt": iso(trade.exit_dt),
         "entry_price": round(trade.entry, 8),
         "exit_price": round(trade.exit, 8) if trade.exit is not None else "",
+        "stop": round(trade.stop, 8),
+        "target": round(trade.target, 8) if trade.target is not None else "",
         "R": round(trade.r_multiple, 10) if trade.r_multiple is not None else "",
         "planned_risk_frac": "",
         "planned_risk_dollars": "",

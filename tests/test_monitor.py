@@ -12,7 +12,7 @@ from unittest.mock import patch
 from monitor.indicators import zscore_prior
 from monitor.market import _parse_archive, resample
 from monitor.models import Candle, CandidateTrade
-from monitor.notify import send_trade_alerts
+from monitor.notify import _format_entry, send_trade_alerts
 from monitor.portfolio import allocate_portfolio
 from monitor.runner import should_persist_status
 from monitor.service import seconds_until_next_run
@@ -132,11 +132,19 @@ class RiskManagerTests(unittest.TestCase):
         result = allocate_portfolio([candidate("B", t, t + HOUR, 1.5)])
         self.assertAlmostEqual(result.realized_equity, 806.0)
 
+    def test_events_carry_stop_and_target(self):
+        t = FORWARD_START_MS
+        result = allocate_portfolio([candidate("B", t)])
+        entry = next(e for e in result.events if e["event_type"] == "ENTRY")
+        self.assertEqual(entry["stop"], 98.0)
+        self.assertEqual(entry["target"], 104.0)
+
 
 class TelegramAlertTests(unittest.TestCase):
     def _rows(self):
         return [
-            {"event_type": "ENTRY", "strategy": "A", "side": "long", "entry_price": 100.0,
+            {"event_type": "ENTRY", "strategy": "B", "side": "long", "entry_price": 100.0,
+             "stop": 97.5, "target": 103.75,
              "event_dt": "2026-09-01T00:00:00Z", "planned_risk_frac": 0.005, "planned_risk_dollars": 4.0},
             {"event_type": "EXIT", "strategy": "A", "side": "long", "entry_price": 100.0,
              "exit_price": 101.5, "R": 0.75, "equity_after": 806.0, "reason": "target",
@@ -156,6 +164,22 @@ class TelegramAlertTests(unittest.TestCase):
     def test_alert_sent_for_entries_and_exits_but_not_skips(self, urlopen):
         send_trade_alerts(self._rows())
         self.assertEqual(urlopen.call_count, 2)
+
+    def test_entry_message_states_price_target_when_present(self):
+        message = _format_entry({
+            "strategy": "B", "side": "long", "entry_price": 100.0, "stop": 97.5, "target": 103.75,
+            "event_dt": "2026-09-01T00:00:00Z", "planned_risk_frac": 0.005, "planned_risk_dollars": 4.0,
+        })
+        self.assertIn("Stop (precio): 97.5", message)
+        self.assertIn("Objetivo (precio): 103.75", message)
+
+    def test_entry_message_states_time_exit_when_no_target(self):
+        message = _format_entry({
+            "strategy": "A", "side": "long", "entry_price": 100.0, "stop": 98.5, "target": "",
+            "event_dt": "2026-09-01T00:00:00Z", "planned_risk_frac": 0.005, "planned_risk_dollars": 4.0,
+        })
+        self.assertIn("sin precio fijo", message)
+        self.assertIn("checkpoint a las 6h", message)
 
 
 if __name__ == "__main__":

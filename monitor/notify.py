@@ -9,12 +9,27 @@ import urllib.request
 
 TELEGRAM_API = "https://api.telegram.org/bot{token}/sendMessage"
 
+# Human-readable time-based exit rule per engine, straight from the frozen spec.
+TIME_EXIT_TEXT = {
+    "A": "checkpoint a las 6h (cierra si el precio no supera la entrada) y salida máxima a las 60h",
+    "B": "salida máxima a las 30 velas de 4h (~5 días) si no toca stop ni objetivo",
+    "C": "salida máxima a las 8h (32 velas de 15m) si no toca stop ni objetivo",
+    "D": "salida máxima a las 48h si no toca stop ni objetivo",
+}
+
 
 def _format_entry(row: dict) -> str:
     risk_pct = float(row["planned_risk_frac"]) * 100 if row["planned_risk_frac"] != "" else 0.0
+    time_exit = TIME_EXIT_TEXT.get(row["strategy"], "según la regla de la estrategia")
+    if row.get("target", "") != "":
+        exit_plan = f"Objetivo (precio): {row['target']}\nSalida por tiempo: {time_exit}"
+    else:
+        exit_plan = f"Objetivo: sin precio fijo — sale por tiempo: {time_exit}"
     return (
         f"\U0001F7E2 ENTRADA {row['strategy']} ({row['side']})\n"
         f"Precio: {row['entry_price']}\n"
+        f"Stop (precio): {row['stop']}\n"
+        f"{exit_plan}\n"
         f"Fecha UTC: {row['event_dt']}\n"
         f"Riesgo: {risk_pct:.3f}% ({row['planned_risk_dollars']} USD)\n"
         "Simulación paper. No se ejecutó ninguna orden real."
