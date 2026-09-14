@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registro Paper BTC</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --bg: #f7f6f1;
+    --surface: #fdfcf9;
+    --surface-2: #f1efe7;
+    --ink: #14130f;
+    --ink-2: #57544a;
+    --muted: #8b8778;
+    --hairline: #e3e0d3;
+    --baseline: #c7c3b0;
+    --accent: #a8690c;
+    --accent-soft: #f1e0c2;
+    --cat-a: #2a78d6;
+    --cat-b: #d1611f;
+    --cat-c: #14875d;
+    --cat-d: #b07e00;
+    --good: #0ca30c;
+    --critical: #d03b3b;
+    --good-soft: #e3f3e0;
+    --critical-soft: #fbe6e4;
+    --shadow: 0 1px 2px rgba(20,19,15,.06), 0 8px 24px -12px rgba(20,19,15,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg: #0d100e; --surface: #161a17; --surface-2: #1e2320;
+      --ink: #f3f1e7; --ink-2: #c4c1b3; --muted: #928e7e;
+      --hairline: #2a2e29; --baseline: #3a3f37; --accent: #e2a53c; --accent-soft: #3a2f18;
+      --cat-a: #4a91ea; --cat-b: #e8823f; --cat-c: #2cb27f; --cat-d: #d9a51a;
+      --good: #22b522; --critical: #e8635f; --good-soft: #16281a; --critical-soft: #341c1c;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg: #0d100e; --surface: #161a17; --surface-2: #1e2320;
+    --ink: #f3f1e7; --ink-2: #c4c1b3; --muted: #928e7e;
+    --hairline: #2a2e29; --baseline: #3a3f37; --accent: #e2a53c; --accent-soft: #3a2f18;
+    --cat-a: #4a91ea; --cat-b: #e8823f; --cat-c: #2cb27f; --cat-d: #d9a51a;
+    --good: #22b522; --critical: #e8635f; --good-soft: #16281a; --critical-soft: #341c1c;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-inline:16px; padding-block:32px 56px;
+  }
+  .wrap{ max-width:960px; margin-inline:auto; display:flex; flex-direction:column; gap:28px; }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .tab{ font-variant-numeric: tabular-nums; }
+  header{ display:flex; flex-direction:column; gap:10px; }
+  .eyebrow{ font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); }
+  h1{ margin:0; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:clamp(26px,4.4vw,34px); letter-spacing:-.01em; text-wrap:balance; }
+  .subhead{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; color:var(--ink-2); font-size:14px; }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px 4px 8px; border-radius:100px; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; letter-spacing:.02em; }
+  .pill.ok{ background:var(--good-soft); color:var(--good); border:1px solid rgba(10,163,10,.25); }
+  .pill.bad{ background:var(--critical-soft); color:var(--critical); border:1px solid rgba(208,59,59,.3); }
+  .pill.wait{ background:var(--surface-2); color:var(--muted); border:1px solid var(--hairline); }
+  .pill .dot{ width:7px; height:7px; border-radius:50%; background:currentColor; box-shadow:0 0 0 3px color-mix(in oklab, currentColor 25%, transparent); }
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--hairline); border:1px solid var(--hairline); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+  .kpi{ background:var(--surface); padding:16px 18px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .kpi .label{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+  .kpi .value{ font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:600; line-height:1.1; }
+  .kpi .value.neg{ color:var(--critical); } .kpi .value.pos{ color:var(--good); }
+  .kpi .sub{ font-size:12px; color:var(--ink-2); }
+  .panel{ background:var(--surface); border:1px solid var(--hairline); border-radius:12px; box-shadow:var(--shadow); padding:20px clamp(14px,3vw,24px) 22px; }
+  .panel-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+  .panel-title{ font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:15px; }
+  .panel-note{ font-size:12px; color:var(--muted); }
+  .chart-shell{ position:relative; }
+  svg.equity{ width:100%; height:auto; display:block; overflow:visible; }
+  .chart-tip{ position:absolute; pointer-events:none; opacity:0; transition:opacity .1s ease; background:var(--ink); color:var(--bg); font-family:"IBM Plex Mono",monospace; font-size:11.5px; padding:6px 9px; border-radius:6px; white-space:nowrap; transform:translate(-50%,-120%); box-shadow:var(--shadow); z-index:2; }
+  .chart-tip b{ font-weight:700; }
+  .pt{ cursor:pointer; } .pt circle{ transition:r .12s ease; } .pt:hover circle,.pt.active circle{ r:7; }
+  .strats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+  .strat-card{ border:1px solid var(--hairline); border-radius:10px; padding:14px 16px; background:var(--surface-2); border-left:4px solid var(--cat); }
+  .strat-card .head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .strat-name{ font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:14px; } .strat-name .tag{ color:var(--cat); }
+  .strat-side{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  .strat-rows{ display:flex; flex-direction:column; gap:5px; font-size:13px; }
+  .strat-rows div{ display:flex; justify-content:space-between; gap:10px; color:var(--ink-2); }
+  .strat-rows span.v{ font-family:"IBM Plex Mono",monospace; color:var(--ink); font-weight:600; }
+  .strat-rows span.v.neg{ color:var(--critical); } .strat-rows span.v.pos{ color:var(--good); }
+  .strat-empty{ color:var(--muted); font-size:12px; font-style:italic; margin-top:2px; }
+  .table-scroll{ overflow-x:auto; border-radius:10px; border:1px solid var(--hairline); }
+  table{ width:100%; border-collapse:collapse; min-width:760px; font-size:13px; }
+  thead th{ text-align:left; font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; padding:10px 12px; background:var(--surface-2); border-bottom:1px solid var(--hairline); position:sticky; top:0; }
+  tbody td{ padding:9px 12px; border-bottom:1px solid var(--hairline); color:var(--ink-2); vertical-align:middle; }
+  tbody tr:last-child td{ border-bottom:none; } tbody tr:hover{ background:var(--surface-2); }
+  .chip{ display:inline-flex; align-items:center; gap:5px; font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:11px; padding:2px 7px; border-radius:5px; }
+  .chip.entry{ background:var(--accent-soft); color:var(--accent); }
+  .chip.exit{ background:var(--surface-2); color:var(--ink-2); border:1px solid var(--hairline); }
+  .chip.skip{ background:var(--surface-2); color:var(--muted); border:1px dashed var(--hairline); }
+  .stratchip{ font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:12px; }
+  .r-val{ font-family:"IBM Plex Mono",monospace; font-weight:600; } .r-val.pos{ color:var(--good); } .r-val.neg{ color:var(--critical); }
+  .price{ font-family:"IBM Plex Mono",monospace; color:var(--ink); } .price .arrow{ color:var(--muted); padding-inline:3px; }
+  .empty-state{ padding:32px 16px; text-align:center; color:var(--muted); font-size:13px; }
+  footer{ display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:var(--muted); font-family:"IBM Plex Mono",monospace; padding-top:4px; }
+  footer a{ color:inherit; }
+  .skeleton{ padding:40px 16px; text-align:center; color:var(--muted); font-family:"IBM Plex Mono",monospace; font-size:13px; }
+  @media (max-width:560px){ .kpi .value{ font-size:19px; } thead th,tbody td{ padding:8px 9px; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="skeleton">Cargando registro en vivo&hellip;</div>
+</div>
+
+<script>
+(function(){
+  const STRATS = {
+    A: {label:"A · PBME", cat:"var(--cat-a)", side:"long",
+        timeExit:"checkpoint a las 6h (cierra si el precio no supera la entrada) y salida máxima a las 60h"},
+    B: {label:"B · ReclaimQ60", cat:"var(--cat-b)", side:"long",
+        timeExit:"salida máxima a las 30 velas de 4h (~5 días) si no toca stop ni objetivo"},
+    C: {label:"C · Momentum15", cat:"var(--cat-c)", side:"long",
+        timeExit:"salida máxima a las 8h (32 velas de 15m) si no toca stop ni objetivo"},
+    D: {label:"D · ExpansionShort93", cat:"var(--cat-d)", side:"short",
+        timeExit:"salida máxima a las 48h si no toca stop ni objetivo"},
+  };
+  const REASON_ES = {stop:"stop", target:"objetivo", time:"tiempo", checkpoint:"checkpoint", risk_capacity_zero:"sin capacidad de riesgo"};
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const fmtDate = iso => {
+    if(!iso) return "—";
+    const d = new Date(iso);
+    if(isNaN(d)) return iso;
+    return d.toLocaleString("es-MX",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit",timeZone:"UTC"}).replace(".","") + " UTC";
+  };
+  const fmtMoney = n => "$" + Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtPrice = n => Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtR = n => (n>=0?"+":"−") + Math.abs(n).toFixed(2) + "R";
+
+  function parseCSV(text){
+    const lines = text.trim().split("\n");
+    const headers = lines[0].split(",");
+    return lines.slice(1).filter(Boolean).map(line => {
+      const cells = line.split(",");
+      const row = {};
+      headers.forEach((h,i) => row[h] = cells[i] !== undefined ? cells[i] : "");
+      return row;
+    });
+  }
+
+  function render(events, status){
+    const exits = events.filter(e => e.event_type === "EXIT").sort((a,b) => a.event_dt.localeCompare(b.event_dt));
+    const entries = events.filter(e => e.event_type === "ENTRY");
+    const startEquity = Number(status.start_equity || 800);
+    const realized = Number(status.realized_equity != null ? status.realized_equity : startEquity);
+    const totalReturn = ((realized - startEquity) / startEquity) * 100;
+    const wins = exits.filter(e => Number(e.R) >= 0).length;
+    const winRate = exits.length ? (wins / exits.length) * 100 : 0;
+    const openCount = (status.open_positions || []).length;
+
+    const perStrat = {};
+    ["A","B","C","D"].forEach(s => perStrat[s] = {n:0, w:0, sumR:0});
+    exits.forEach(e => {
+      const s = perStrat[e.strategy]; if(!s) return;
+      s.n++; if(Number(e.R) >= 0) s.w++; s.sumR += Number(e.R);
+    });
+
+    // health pill
+    let pillClass = "wait", pillText = "health: " + (status.health || "desconocido");
+    if(status.health === "ok") pillClass = "ok";
+    else if(status.health === "data_unavailable") pillClass = "bad";
+    else if(status.health === "delayed_official_archive") pillClass = "wait";
+
+    // equity curve points: start + each exit chronologically
+    const points = [{date:null, equity:startEquity, label:"inicio"}].concat(
+      exits.map(e => ({date:e.event_dt, equity:Number(e.equity_after), strategy:e.strategy, reason:e.reason}))
+    );
+    const values = points.map(p => p.equity);
+    const dataMin = Math.min(...values), dataMax = Math.max(...values);
+    const pad = Math.max((dataMax - dataMin) * 0.25, dataMax * 0.01, 2);
+    const domainMin = Math.min(dataMin, startEquity) - pad;
+    const domainMax = Math.max(dataMax, startEquity) + pad;
+    const W = 760, H = 220, L = 56, R = 20, T = 24, B = 32;
+    const cw = W - L - R, ch = H - T - B;
+    const xAt = i => points.length > 1 ? L + i * (cw / (points.length - 1)) : L + cw/2;
+    const yAt = v => T + ((domainMax - v) / (domainMax - domainMin)) * ch;
+    const baselineY = yAt(startEquity);
+    const lineColor = realized >= startEquity ? "var(--good)" : "var(--critical)";
+    const pathD = points.map((p,i) => (i===0?"M":"L") + xAt(i).toFixed(1) + "," + yAt(p.equity).toFixed(1)).join(" ");
+    const areaD = pathD + ` L${xAt(points.length-1).toFixed(1)},${(T+ch).toFixed(1)} L${L},${(T+ch).toFixed(1)} Z`;
+    const lastX = xAt(points.length-1), lastY = yAt(points[points.length-1].equity);
+
+    const circles = points.map((p,i) => {
+      const isLast = i === points.length - 1;
+      const label = p.date ? fmtDate(p.date) + (p.strategy ? " · EXIT " + p.strategy + " · " + (REASON_ES[p.reason]||p.reason) : "") : "inicio";
+      return `<g class="pt${isLast?' active':''}" data-d="${esc(label)}" data-v="${esc(fmtMoney(p.equity))}${isLast?' (hoy)':''}">
+        <circle cx="${xAt(i).toFixed(1)}" cy="${yAt(p.equity).toFixed(1)}" r="${isLast?6:4.5}" fill="${isLast?lineColor:'var(--surface)'}" stroke="${lineColor}" stroke-width="2.25"/>
+      </g>`;
+    }).join("");
+
+    const strategyCards = ["A","B","C","D"].map(s => {
+      const meta = STRATS[s], st = perStrat[s];
+      if(st.n === 0){
+        return `<div class="strat-card" style="--cat:${meta.cat}">
+          <div class="head"><span class="strat-name"><span class="tag">${s}</span> · ${meta.label.split(" · ")[1]}</span><span class="strat-side">${meta.side}</span></div>
+          <div class="strat-rows"><div>Trades <span class="v tab">0</span></div></div>
+          <div class="strat-empty">sin señales todavía</div>
+        </div>`;
+      }
+      const wr = (st.w/st.n*100).toFixed(0);
+      const rClass = st.sumR >= 0 ? "pos" : "neg";
+      return `<div class="strat-card" style="--cat:${meta.cat}">
+        <div class="head"><span class="strat-name"><span class="tag">${s}</span> · ${meta.label.split(" · ")[1]}</span><span class="strat-side">${meta.side}</span></div>
+        <div class="strat-rows">
+          <div>Trades <span class="v tab">${st.n}</span></div>
+          <div>Win rate <span class="v tab">${wr}%</span></div>
+          <div>Suma R <span class="v ${rClass} tab">${fmtR(st.sumR)}</span></div>
+        </div>
+      </div>`;
+    }).join("");
+
+    const ledgerRows = events.slice().sort((a,b) => a.event_dt.localeCompare(b.event_dt)).map(e => {
+      const meta = STRATS[e.strategy] || {cat:"var(--ink-2)"};
+      const chipClass = e.event_type === "ENTRY" ? "entry" : (e.event_type === "EXIT" ? "exit" : "skip");
+      let priceCell = `<span class="price tab">${fmtPrice(e.entry_price)}</span>`;
+      if(e.event_type === "EXIT" && e.exit_price) priceCell = `<span class="price tab">${fmtPrice(e.entry_price)}<span class="arrow">→</span>${fmtPrice(e.exit_price)}</span>`;
+      const rCell = (e.event_type === "EXIT" && e.R !== "" && e.R !== undefined) ? `<span class="r-val ${Number(e.R)>=0?'pos':'neg'} tab">${fmtR(Number(e.R))}</span>` : "—";
+      const stopTarget = e.event_type === "ENTRY"
+        ? `${e.stop?fmtPrice(e.stop):"—"}${e.target?" / "+fmtPrice(e.target):" / sin obj."}`
+        : "—";
+      return `<tr>
+        <td class="mono tab">${fmtDate(e.event_dt)}</td>
+        <td><span class="chip ${chipClass}">${e.event_type}</span></td>
+        <td class="stratchip" style="color:${meta.cat}">${esc(e.strategy)}</td>
+        <td>${esc(e.side)}</td>
+        <td>${priceCell}</td>
+        <td class="mono tab">${stopTarget}</td>
+        <td>${rCell}</td>
+        <td>${e.event_type !== "ENTRY" ? (REASON_ES[e.reason] || e.reason || "—") : "—"}</td>
+      </tr>`;
+    }).join("");
+
+    const shortSha = (status.spec_sha256 || "").slice(0,8) + "…" + (status.spec_sha256 || "").slice(-6);
+
+    document.getElementById("app").innerHTML = `
+      <header>
+        <div class="eyebrow">BTCUSDT · USD-M Futures · Paper / Shadow</div>
+        <h1>Registro Paper BTC</h1>
+        <div class="subhead">
+          <span class="pill ${pillClass}"><span class="dot"></span>${esc(pillText)}</span>
+          <span>Datos cerrados hasta <b class="mono tab">${fmtDate(status.data_through_utc)}</b></span>
+          <span>· Última corrida <b class="mono tab">${fmtDate(status.last_success_utc)}</b></span>
+        </div>
+      </header>
+
+      <section class="kpis">
+        <div class="kpi"><div class="label">Equity actual</div><div class="value tab">${fmtMoney(realized)}</div><div class="sub">inicio ${fmtMoney(startEquity)}</div></div>
+        <div class="kpi"><div class="label">Retorno total</div><div class="value tab ${totalReturn>=0?'pos':'neg'}">${totalReturn>=0?'+':'−'}${Math.abs(totalReturn).toFixed(2)}%</div><div class="sub">desde 2026-09-01</div></div>
+        <div class="kpi"><div class="label">Trades cerrados</div><div class="value tab">${exits.length}</div><div class="sub">${["A","B","C","D"].map(s=>s+"·"+perStrat[s].n).join("  ")}</div></div>
+        <div class="kpi"><div class="label">Win rate</div><div class="value tab">${winRate.toFixed(0)}%</div><div class="sub">${wins} ganadora${wins===1?'':'s'} / ${exits.length||0}</div></div>
+        <div class="kpi"><div class="label">Posiciones abiertas</div><div class="value tab">${openCount}</div><div class="sub">${openCount ? 'con exposición activa' : 'nada expuesto ahora'}</div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div class="panel-title">Curva de equity</div><div class="panel-note">por operación cerrada · línea punteada = capital inicial (${fmtMoney(startEquity)})</div></div>
+        <div class="chart-shell">
+          <svg class="equity" viewBox="0 0 ${W} ${H}" role="img" aria-label="Curva de equity">
+            <line x1="${L}" y1="${baselineY.toFixed(1)}" x2="${W-R}" y2="${baselineY.toFixed(1)}" stroke="var(--baseline)" stroke-width="1.5" stroke-dasharray="3 4"/>
+            <text x="${W-R}" y="${(baselineY-5).toFixed(1)}" text-anchor="end" font-family="IBM Plex Mono" font-size="11" fill="var(--muted)">inicio ${fmtMoney(startEquity)}</text>
+            <path d="${areaD}" fill="${lineColor}" fill-opacity="0.08" stroke="none"/>
+            <path d="${pathD}" fill="none" stroke="${lineColor}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+            ${circles}
+            <text x="${lastX.toFixed(1)}" y="${(lastY+16).toFixed(1)}" text-anchor="${lastX>W-80?'end':'middle'}" font-family="IBM Plex Mono" font-size="12" font-weight="700" fill="${lineColor}">${fmtMoney(realized)}</text>
+          </svg>
+          <div class="chart-tip" id="tip"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div class="panel-title">Desempeño por estrategia</div><div class="panel-note">suma de R realizado, operaciones cerradas</div></div>
+        <div class="strats">${strategyCards}</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div class="panel-title">Bitácora completa</div><div class="panel-note">${events.length} eventos · orden cronológico</div></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Fecha UTC</th><th>Evento</th><th>Estr.</th><th>Lado</th><th>Precio</th><th>Stop/Obj.</th><th>R</th><th>Motivo</th></tr></thead>
+            <tbody>${ledgerRows || '<tr><td colspan="8" class="empty-state">Aún no hay eventos registrados.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer>
+        <div>${esc(status.suite_id || "")} · spec sha256 ${esc(shortSha)} · forward-OOS desde 2026-09-01</div>
+        <div>Fuente: runtime/forward_events.csv &amp; runtime/status.json, leídos en vivo desde este mismo repo vía GitHub Pages. Se refresca sola cada ~3 min. Simulación paper, sin órdenes reales.</div>
+      </footer>
+    `;
+
+    document.querySelectorAll(".pt").forEach(pt => {
+      pt.addEventListener("mouseenter", () => {
+        const tip = document.getElementById("tip");
+        const circle = pt.querySelector("circle");
+        const svg = pt.closest("svg");
+        const shell = document.querySelector(".chart-shell");
+        const svgRect = svg.getBoundingClientRect();
+        const shellRect = shell.getBoundingClientRect();
+        const vb = svg.viewBox.baseVal;
+        const scale = svgRect.width / vb.width;
+        const cx = parseFloat(circle.getAttribute("cx")) * scale;
+        const cy = parseFloat(circle.getAttribute("cy")) * scale;
+        tip.innerHTML = "<b>" + pt.dataset.v + "</b><br>" + pt.dataset.d;
+        tip.style.left = (svgRect.left - shellRect.left + cx) + "px";
+        tip.style.top = (svgRect.top - shellRect.top + cy) + "px";
+        tip.style.opacity = "1";
+      });
+      pt.addEventListener("mouseleave", () => { document.getElementById("tip").style.opacity = "0"; });
+    });
+  }
+
+  async function load(){
+    try{
+      const bust = "?_=" + Date.now();
+      const [csvRes, statusRes] = await Promise.all([
+        fetch("runtime/forward_events.csv" + bust, {cache:"no-store"}),
+        fetch("runtime/status.json" + bust, {cache:"no-store"}),
+      ]);
+      if(!csvRes.ok || !statusRes.ok) throw new Error("HTTP " + csvRes.status + "/" + statusRes.status);
+      const [csvText, status] = await Promise.all([csvRes.text(), statusRes.json()]);
+      const events = parseCSV(csvText);
+      render(events, status);
+    }catch(err){
+      document.getElementById("app").innerHTML =
+        '<div class="skeleton">No se pudo cargar el registro en vivo.<br>' + esc(err.message) +
+        '<br><br>Verifica que GitHub Pages esté sirviendo desde la raíz de <code>main</code>.</div>';
+    }
+  }
+
+  load();
+  setInterval(load, 3 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
