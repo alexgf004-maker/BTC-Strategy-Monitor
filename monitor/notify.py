@@ -21,16 +21,31 @@ def _format_entry(row: dict) -> str:
     )
 
 
-def send_entry_alerts(new_rows: list[dict]) -> None:
-    """Best-effort Telegram alert for new paper ENTRY events. Never raises."""
+def _format_exit(row: dict) -> str:
+    r_multiple = float(row["R"]) if row["R"] != "" else 0.0
+    icon = "✅" if r_multiple >= 0 else "❌"
+    return (
+        f"{icon} SALIDA {row['strategy']} ({row['side']})\n"
+        f"Entrada: {row['entry_price']} → Salida: {row['exit_price']}\n"
+        f"Resultado: {r_multiple:.3f}R ({row['reason']})\n"
+        f"Equity: {row['equity_after']} USD\n"
+        f"Fecha UTC: {row['event_dt']}\n"
+        "Simulación paper. No se ejecutó ninguna orden real."
+    )
+
+
+def send_trade_alerts(new_rows: list[dict]) -> None:
+    """Best-effort Telegram alert for new paper ENTRY/EXIT events. Never raises."""
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     if not token or not chat_id:
         return
 
-    entries = [row for row in new_rows if row["event_type"] == "ENTRY"]
-    for row in entries:
-        _send_message(token, chat_id, _format_entry(row))
+    for row in new_rows:
+        if row["event_type"] == "ENTRY":
+            _send_message(token, chat_id, _format_entry(row))
+        elif row["event_type"] == "EXIT":
+            _send_message(token, chat_id, _format_exit(row))
 
 
 def _send_message(token: str, chat_id: str, text: str) -> None:
