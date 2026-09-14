@@ -6,7 +6,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .market import DataUnavailable, fetch_15m, resample
@@ -70,21 +70,6 @@ def write_notification(new_rows: list[dict], data_through: str) -> None:
     NEW_EVENTS.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def should_persist_status(old: dict, new_event_count: int, now: datetime) -> bool:
-    if new_event_count:
-        return True
-    if old.get("health") not in ("ok", "delayed_official_archive"):
-        return True
-    previous = old.get("last_success_utc")
-    if not previous:
-        return True
-    try:
-        last = datetime.fromisoformat(previous.replace("Z", "+00:00"))
-    except ValueError:
-        return True
-    return now - last >= timedelta(hours=1)
-
-
 def persist_failure(message: str) -> None:
     old = read_json(STATUS, {})
     already_degraded = old.get("health") == "data_unavailable"
@@ -106,7 +91,6 @@ def main() -> int:
     now = utc_now()
     # Fixed causal warm-up. It precedes forward OOS by 123 days.
     warmup_start = int(datetime(2026, 5, 1, tzinfo=timezone.utc).timestamp() * 1000)
-    old_status = read_json(STATUS, {})
     old_ids = existing_event_ids()
     try:
         market_fetch = fetch_15m(warmup_start)
@@ -145,8 +129,7 @@ def main() -> int:
         "spec_sha256": actual_sha,
         "real_orders_enabled": False,
     }
-    if should_persist_status(old_status, len(new_rows), now):
-        STATUS.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    STATUS.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (RUNTIME / "run_result.json").write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(status, indent=2, sort_keys=True))
     return 0
