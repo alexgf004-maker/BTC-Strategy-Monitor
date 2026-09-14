@@ -22,6 +22,7 @@ SPEC = ROOT / "strategy_suite_v1_FINAL.json"
 STATUS = RUNTIME / "status.json"
 EVENTS = RUNTIME / "forward_events.csv"
 NEW_EVENTS = RUNTIME / "new_events.md"
+ALERT_OUTBOX = RUNTIME / "alert_outbox.json"
 EXPECTED_SPEC_SHA = "5c601cfb71993c09bd6c512108cb20c5a85f785d2800298a014f77afad29c908"
 FIELDNAMES = [
     "event_id", "event_dt", "event_type", "strategy", "side", "signal_dt", "entry_dt", "exit_dt",
@@ -39,6 +40,52 @@ def read_json(path: Path, default: dict) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return default
+
+
+def write_json_atomic(path: Path, payload: dict | list) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def deliver_alert_outbox(new_rows: list[dict]) -> dict:
+    """Persist alerts before sending and retry every unsent item on later runs."""
+    stored = read_json(ALERT_OUTBOX, {"items": []})
+    items = stored.get("items", []) if isinstance(stored, dict) else []
+    known = {item.get("event_id") for item in items}
+    created = utc_now().isoformat().replace("+00:00", "Z")
+    for row in new_rows:
+        if row.get("event_type") not in ("ENTRY", "EXIT") or row.get("event_id") in known:
+            continue
+        items.append({
+            "event_id": row["event_id"], "event": row, "status": "pending",
+            "attempts": 0, "created_utc": created, "last_attempt_utc": None,
+            "sent_utc": None, "last_error": None,
+        })
+        known.add(row["event_id"])
+
+    # Save before networking so an interruption cannot erase the alert.
+    write_json_atomic(ALERT_OUTBOX, {"items": items})
+    for item in [item for item in items if item.get("status") != "sent"]:
+        attempted = utc_now().isoformat().replace("+00:00", "Z")
+        sent, errors = send_trade_alerts([item["event"]])
+        item["attempts"] = int(item.get("attempts", 0)) + 1
+        item["last_attempt_utc"] = attempted
+        if sent == 1:
+            item["status"] = "sent"
+            item["sent_utc"] = utc_now().isoformat().replace("+00:00", "Z")
+            item["last_error"] = None
+        else:
+            item["status"] = "pending"
+            item["last_error"] = errors[0] if errors else "telegram_delivery_unknown"
+        write_json_atomic(ALERT_OUTBOX, {"items": items})
+
+    unsent = [item for item in items if item.get("status") != "sent"]
+    return {
+        "pending_count": len(unsent),
+        "sent_count": sum(item.get("status") == "sent" for item in items),
+        "last_error": unsent[-1].get("last_error") if unsent else None,
+    }
 
 
 def existing_event_keys() -> set[tuple[str, str, str]]:
@@ -119,7 +166,7 @@ def main() -> int:
     last_closed = next(bar for bar in reversed(candles_15m) if bar.is_closed)
     data_through = iso(last_closed.close_time)
     write_notification(new_rows, data_through)
-    send_trade_alerts(new_rows)
+    alert_delivery = deliver_alert_outbox(new_rows)
 
     status = {
         "suite_id": "BTCUSDT_Strategy_Suite_v1.0_FINAL",
@@ -135,6 +182,7 @@ def main() -> int:
         "open_positions": portfolio.open_positions,
         "event_count": len(portfolio.events),
         "new_event_count": len(new_rows),
+        "alert_delivery": alert_delivery,
         "bars": {
             "15m_closed": sum(bar.is_closed for bar in candles_15m),
             "1h_closed": sum(bar.is_closed for bar in candles_1h),

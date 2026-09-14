@@ -49,21 +49,30 @@ def _format_exit(row: dict) -> str:
     )
 
 
-def send_trade_alerts(new_rows: list[dict]) -> None:
-    """Best-effort Telegram alert for new paper ENTRY/EXIT events. Never raises."""
+def send_trade_alerts(new_rows: list[dict]) -> tuple[int, list[str]]:
+    """Attempt Telegram delivery and report successes and retryable errors."""
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     if not token or not chat_id:
-        return
+        return 0, ["telegram_credentials_missing"] if new_rows else []
 
+    sent = 0
+    errors: list[str] = []
     for row in new_rows:
         if row["event_type"] == "ENTRY":
-            _send_message(token, chat_id, _format_entry(row))
+            error = _send_message(token, chat_id, _format_entry(row))
         elif row["event_type"] == "EXIT":
-            _send_message(token, chat_id, _format_exit(row))
+            error = _send_message(token, chat_id, _format_exit(row))
+        else:
+            continue
+        if error is None:
+            sent += 1
+        else:
+            errors.append(error)
+    return sent, errors
 
 
-def _send_message(token: str, chat_id: str, text: str) -> None:
+def _send_message(token: str, chat_id: str, text: str) -> str | None:
     url = TELEGRAM_API.format(token=token)
     payload = json.dumps({"chat_id": chat_id, "text": text}).encode("utf-8")
     request = urllib.request.Request(
@@ -72,5 +81,7 @@ def _send_message(token: str, chat_id: str, text: str) -> None:
     try:
         with urllib.request.urlopen(request, timeout=10) as response:
             response.read()
+        return None
     except (urllib.error.URLError, urllib.error.HTTPError, OSError) as exc:
         print(f"Telegram alert failed: {exc}", file=sys.stderr)
+        return f"{type(exc).__name__}: {exc}"
