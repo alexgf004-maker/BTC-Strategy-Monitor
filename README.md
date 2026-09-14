@@ -12,6 +12,7 @@ Consulta únicamente velas públicas de Binance USD-M Futures, reconstruye los m
 - El registro forward-OOS comienza el `2026-09-01 00:00 UTC`.
 - El gestor de riesgo aplica los límites congelados: 2% global y 1.25% compartido entre A+C.
 - Los eventos nuevos crean una incidencia de GitHub para facilitar las notificaciones.
+- Si se configuran los secretos `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`, cada nueva **ENTRADA** paper también se envía como mensaje de Telegram.
 - Una ejecución manual está disponible desde la pestaña **Actions**.
 
 ## Archivos importantes
@@ -19,9 +20,17 @@ Consulta únicamente velas públicas de Binance USD-M Futures, reconstruye los m
 - `strategy_suite_v1_FINAL.json`: especificación congelada e inmutable.
 - `monitor/market.py`, `monitor/indicators.py` y `monitor/strategies.py`: datos, indicadores y señales.
 - `monitor/portfolio.py`: simulación paper y gestor de riesgo.
+- `monitor/notify.py`: alerta de Telegram para nuevas entradas (best-effort, nunca detiene el monitor).
 - `monitor/runner.py`: ejecución idempotente y escritura de resultados.
 - `runtime/forward_events.csv`: registro paper acumulado y reproducible.
 - `runtime/status.json`: último estado confirmado.
+
+## Alertas de Telegram
+
+1. Crea un bot con [@BotFather](https://t.me/BotFather) y copia el token (`TELEGRAM_BOT_TOKEN`).
+2. Escríbele algo al bot y obtén tu `chat_id` (por ejemplo con `https://api.telegram.org/bot<token>/getUpdates`).
+3. En el repo: **Settings → Secrets and variables → Actions → New repository secret** y agrega `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`.
+4. Sin esos secretos el monitor sigue funcionando igual, simplemente no envía el mensaje de Telegram.
 
 ## Seguridad
 
