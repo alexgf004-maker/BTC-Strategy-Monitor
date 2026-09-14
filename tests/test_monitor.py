@@ -7,10 +7,12 @@ import unittest
 import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from monitor.indicators import zscore_prior
 from monitor.market import _parse_archive, resample
 from monitor.models import Candle, CandidateTrade
+from monitor.notify import send_entry_alerts
 from monitor.portfolio import allocate_portfolio
 from monitor.runner import should_persist_status
 from monitor.strategies import FORWARD_START_MS, generate_a
@@ -124,6 +126,28 @@ class RiskManagerTests(unittest.TestCase):
         t = FORWARD_START_MS
         result = allocate_portfolio([candidate("B", t, t + HOUR, 1.5)])
         self.assertAlmostEqual(result.realized_equity, 806.0)
+
+
+class TelegramAlertTests(unittest.TestCase):
+    def _rows(self):
+        return [
+            {"event_type": "ENTRY", "strategy": "A", "side": "long", "entry_price": 100.0,
+             "event_dt": "2026-09-01T00:00:00Z", "planned_risk_frac": 0.005, "planned_risk_dollars": 4.0},
+            {"event_type": "EXIT", "strategy": "A", "side": "long", "entry_price": 100.0,
+             "event_dt": "2026-09-01T01:00:00Z", "planned_risk_frac": "", "planned_risk_dollars": ""},
+        ]
+
+    @patch.dict("os.environ", {}, clear=True)
+    @patch("monitor.notify.urllib.request.urlopen")
+    def test_no_alert_without_credentials(self, urlopen):
+        send_entry_alerts(self._rows())
+        urlopen.assert_not_called()
+
+    @patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "t", "TELEGRAM_CHAT_ID": "c"}, clear=True)
+    @patch("monitor.notify.urllib.request.urlopen")
+    def test_alert_sent_only_for_entries(self, urlopen):
+        send_entry_alerts(self._rows())
+        self.assertEqual(urlopen.call_count, 1)
 
 
 if __name__ == "__main__":
