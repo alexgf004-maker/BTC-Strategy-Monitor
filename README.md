@@ -7,6 +7,7 @@ Consulta únicamente velas públicas de Binance USD-M Futures, reconstruye los m
 ## Funcionamiento
 
 - GitHub Actions ejecuta el monitor a los minutos `07, 22, 37 y 52` de cada hora (UTC), después del cierre esperado de cada vela de 15 minutos.
+- El motor intenta primero la API de Binance Futures. Si Binance bloquea la región del runner, usa exclusivamente el archivo oficial Binance Vision: conserva el mercado y las columnas exactas, pero los datos llegan con retraso hasta el día siguiente.
 - Las señales se calculan solo con velas cerradas y las entradas usan la apertura de la vela siguiente.
 - El registro forward-OOS comienza el `2026-09-01 00:00 UTC`.
 - El gestor de riesgo aplica los límites congelados: 2% global y 1.25% compartido entre A+C.
@@ -24,6 +25,8 @@ Consulta únicamente velas públicas de Binance USD-M Futures, reconstruye los m
 ## Seguridad
 
 El código falla de forma cerrada si la fuente de datos no responde o si cambia el SHA-256 de la especificación. No usa `BINANCE_API_KEY`, `BINANCE_API_SECRET` ni ningún endpoint de órdenes.
+
+El estado distingue claramente `binance_futures_realtime` de `binance_vision_official_delayed`; nunca sustituye silenciosamente datos spot o de otro exchange.
 
 ## Estado de validación
 

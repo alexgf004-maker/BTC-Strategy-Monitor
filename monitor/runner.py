@@ -106,7 +106,8 @@ def main() -> int:
     old_status = read_json(STATUS, {})
     old_ids = existing_event_ids()
     try:
-        candles_15m = fetch_15m(warmup_start)
+        market_fetch = fetch_15m(warmup_start)
+        candles_15m = market_fetch.candles
         candles_1h = resample(candles_15m, 1)
         candles_4h = resample(candles_15m, 4)
         candidates = generate_candidates(candles_15m, candles_1h, candles_4h)
@@ -124,8 +125,10 @@ def main() -> int:
     status = {
         "suite_id": "BTCUSDT_Strategy_Suite_v1.0_FINAL",
         "mode": "paper",
-        "health": "ok",
+        "health": "ok" if market_fetch.source == "binance_futures_realtime" else "delayed_official_archive",
         "market": "Binance USD-M Futures BTCUSDT",
+        "data_source": market_fetch.source,
+        "data_warning": market_fetch.warning,
         "data_through_utc": data_through,
         "last_success_utc": now.isoformat().replace("+00:00", "Z"),
         "realized_equity": round(portfolio.realized_equity, 8),

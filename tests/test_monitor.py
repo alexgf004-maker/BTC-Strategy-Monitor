@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import math
 import unittest
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
 from monitor.indicators import zscore_prior
-from monitor.market import resample
+from monitor.market import _parse_archive, resample
 from monitor.models import Candle, CandidateTrade
 from monitor.portfolio import allocate_portfolio
 from monitor.strategies import FORWARD_START_MS, generate_a
@@ -81,6 +83,16 @@ class CausalityTests(unittest.TestCase):
         self.assertTrue(trades)
         self.assertEqual(trades[0].entry_i, trades[0].signal_i + 1)
         self.assertGreater(trades[0].entry_dt, trades[0].signal_dt)
+
+    def test_binance_archive_microseconds_are_normalized(self):
+        csv_line = "open_time,open,high,low,close,volume,close_time,quote_volume,count,taker_base,taker_quote,ignore\n1788220800000000,100,102,99,101,12,1788221699999000,0,45,7,0,0\n"
+        payload = io.BytesIO()
+        with zipfile.ZipFile(payload, "w") as archive:
+            archive.writestr("BTCUSDT-15m-test.csv", csv_line)
+        rows = _parse_archive(payload.getvalue())
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].open_time, 1788220800000)
+        self.assertEqual(rows[0].close_time, 1788221699999)
 
 
 class RiskManagerTests(unittest.TestCase):
