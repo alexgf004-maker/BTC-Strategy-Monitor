@@ -6,10 +6,11 @@ Consulta únicamente velas públicas de Binance USD-M Futures, reconstruye los m
 
 ## Funcionamiento
 
-- GitHub Actions ejecuta el monitor a los minutos `07, 22, 37 y 52` de cada hora (UTC), después del cierre esperado de cada vela de 15 minutos.
+- GitHub Actions ejecuta el monitor a los minutos `02, 17, 32 y 47` de cada hora (UTC), después del cierre esperado de cada vela de 15 minutos.
 - En un VPS, `python -m monitor.service` mantiene un proceso 24/7 y evalúa 35 segundos después de cada cierre de vela de 15 minutos.
 - El motor intenta primero la API de Binance Futures. Si Binance bloquea la región del runner, usa exclusivamente el archivo oficial Binance Vision: conserva el mercado y las columnas exactas, pero los datos llegan con retraso hasta el día siguiente.
 - Las señales se calculan solo con velas cerradas y las entradas usan la apertura de la vela siguiente.
+- En modo tiempo real se conserva una única vela parcial como referencia de apertura: sirve para registrar la entrada al comenzar la vela, pero jamás se evalúa como vela de señal ni se usa para cerrar una operación antes de que termine.
 - El registro forward-OOS comienza el `2026-09-01 00:00 UTC`.
 - El gestor de riesgo aplica los límites congelados: 2% global y 1.25% compartido entre A+C.
 - Los eventos nuevos crean una incidencia de GitHub para facilitar las notificaciones.
@@ -51,6 +52,8 @@ El servicio escucha únicamente en `127.0.0.1:8080` hasta que se configure un pr
 
 ## Estado de validación
 
-El ZIP recibido incluye la especificación, el resumen congelado y auditorías, pero no incluye el CSV canónico de 15 minutos ni los tradebooks completos A/B/C/D mencionados en el manifiesto. Por eso esta implementación se identifica como **reconstrucción paper desde la especificación congelada**. No se afirma reproducción histórica completa hasta aportar esos archivos y ejecutar la auditoría correspondiente.
+La reconstrucción se contrastó con el CSV canónico (`233,760` velas de 15 minutos, SHA-256 `58a901…e8c052`) y los tradebooks de referencia. Coinciden las señales, entradas y salidas de las `554` operaciones: A=`141`, B=`220`, C=`100`, D=`93`. También coinciden exactamente las `25` operaciones B con contexto de soporte/resistencia, sin falsos positivos ni falsos negativos. El detalle verificable está en `validation/historical_audit.json`; la comprobación sobre el dataset se repite con `python tools/validate_historical.py <csv>`.
+
+La auditoría encontró además una diferencia importante en la cifra terminal congelada. Los `$3,136.14` base y `$3,210.73` con S/R se reproducen únicamente con el simulador histórico legado, que procesa operaciones de una en una y, en ciertos empates horarios, puede aplicar el resultado de una vela antes de dimensionar otra entrada del mismo instante. El monitor en vivo no usa esa anticipación: libera riesgo solo cuando la vela de salida ya cerró. Su replay histórico causal equivalente es `$3,102.78` base y `$3,175.38` con S/R. La especificación congelada no se modificó; la discrepancia queda documentada y el forward paper conserva reglas causales.
 
 > Herramienta educativa y de investigación. Los resultados simulados no garantizan resultados futuros ni constituyen asesoría financiera.

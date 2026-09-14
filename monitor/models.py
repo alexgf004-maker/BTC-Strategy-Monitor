@@ -25,6 +25,7 @@ class Candle:
     volume: float
     number_trades: int
     taker_buy_volume: float
+    is_closed: bool = True
 
 
 @dataclass

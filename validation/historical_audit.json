@@ -1,0 +1,66 @@
+{
+  "audit_date_utc": "2026-09-14",
+  "canonical_dataset": {
+    "bars": {
+      "15m": 233760,
+      "1h": 58440,
+      "4h": 14610
+    },
+    "sha256": "58a901afdeddcc36a69c6b600d68e243321b1e76e64ef89255fb486132e8c052"
+  },
+  "engine_reproduction": {
+    "B_support_context_entry_matches": 25,
+    "B_support_context_false_negatives": 0,
+    "B_support_context_false_positives": 0,
+    "candidate_counts": {
+      "A": 141,
+      "B": 220,
+      "C": 100,
+      "D": 93
+    },
+    "tradebook_comparison": {
+      "A": {
+        "entry_matches": 141,
+        "exit_matches": 141,
+        "max_abs_R_error": 0.000005852046936372091,
+        "signal_matches": 141
+      },
+      "B": {
+        "entry_matches": 220,
+        "exit_matches": 220,
+        "max_abs_R_error": 0.0000047578942796722146,
+        "signal_matches": 220
+      },
+      "C": {
+        "entry_matches": 100,
+        "exit_matches": 100,
+        "max_abs_R_error": 1.7763568394002505e-14,
+        "signal_matches": 100
+      },
+      "D": {
+        "entry_matches": 93,
+        "exit_matches": 93,
+        "max_abs_R_error": 1.9317880628477724e-14,
+        "signal_matches": 93
+      }
+    }
+  },
+  "risk_replay": {
+    "causal_closed_bar": {
+      "base_final_equity": 3102.7781938877774,
+      "with_B_SR_0625_final_equity": 3175.3760692316546
+    },
+    "frozen_reported": {
+      "base_final_equity": 3136.1424902187523,
+      "with_B_SR_0625_final_equity": 3210.7329616517304
+    },
+    "legacy_reproduction": {
+      "base_final_equity": 3136.1424902187523,
+      "base_scaled_trades": 64,
+      "max_closed_trade_drawdown": -0.08275062277234602,
+      "with_B_SR_0625_final_equity": 3210.7329616517304
+    },
+    "finding": "The frozen terminal figures are exactly reproducible only with the legacy research replay, which processes candidates one at a time and can realize a same-bar exit before a lower-priority entry sharing the same timestamp. The live monitor instead releases risk only after a closed exit bar is observable."
+  },
+  "status": "canonical_signal_tradebooks_reproduced_live_allocator_causal"
+}

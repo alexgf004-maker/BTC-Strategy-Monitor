@@ -13,7 +13,10 @@ PRIORITY = {"C": 0, "D": 1, "B": 2, "A": 3}
 
 
 def _event_id(event_type: str, trade: CandidateTrade) -> str:
-    raw = f"v1|{event_type}|{trade.strategy}|{trade.signal_dt}|{trade.entry_dt}|{trade.exit_dt or 0}"
+    # An ENTRY keeps the same identity when the position later acquires an exit.
+    # EXIT includes the actual exit availability timestamp.
+    exit_component = (trade.exit_dt or 0) if event_type == "EXIT" else 0
+    raw = f"v2|{event_type}|{trade.strategy}|{trade.signal_dt}|{trade.entry_dt}|{exit_component}"
     return hashlib.sha256(raw.encode()).hexdigest()[:20]
 
 

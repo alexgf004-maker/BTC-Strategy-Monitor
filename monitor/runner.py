@@ -41,11 +41,15 @@ def read_json(path: Path, default: dict) -> dict:
         return default
 
 
-def existing_event_ids() -> set[str]:
+def existing_event_keys() -> set[tuple[str, str, str]]:
     if not EVENTS.exists():
         return set()
     with EVENTS.open(newline="", encoding="utf-8") as handle:
-        return {row["event_id"] for row in csv.DictReader(handle) if row.get("event_id")}
+        return {
+            (row.get("event_type", ""), row.get("strategy", ""), row.get("entry_dt", ""))
+            for row in csv.DictReader(handle)
+            if row.get("event_type") and row.get("strategy") and row.get("entry_dt")
+        }
 
 
 def write_events(rows: list[dict]) -> None:
@@ -91,12 +95,15 @@ def main() -> int:
     now = utc_now()
     # Fixed causal warm-up. It precedes forward OOS by 123 days.
     warmup_start = int(datetime(2026, 5, 1, tzinfo=timezone.utc).timestamp() * 1000)
-    old_ids = existing_event_ids()
+    old_keys = existing_event_keys()
     try:
         market_fetch = fetch_15m(warmup_start)
         candles_15m = market_fetch.candles
-        candles_1h = resample(candles_15m, 1)
-        candles_4h = resample(candles_15m, 4)
+        # The real-time API includes the current 15m kline.  It is never used
+        # as a signal bar, but its known open lets a next-bar paper entry be
+        # recorded immediately rather than one full timeframe late.
+        candles_1h = resample(candles_15m, 1, include_partial=True)
+        candles_4h = resample(candles_15m, 4, include_partial=True)
         candidates = generate_candidates(candles_15m, candles_1h, candles_4h)
         portfolio = allocate_portfolio(candidates)
     except (DataUnavailable, OSError, ValueError) as exc:
@@ -105,8 +112,12 @@ def main() -> int:
         return 1
 
     write_events(portfolio.events)
-    new_rows = [row for row in portfolio.events if row["event_id"] not in old_ids]
-    data_through = iso(candles_15m[-1].close_time)
+    new_rows = [
+        row for row in portfolio.events
+        if (row["event_type"], row["strategy"], row["entry_dt"]) not in old_keys
+    ]
+    last_closed = next(bar for bar in reversed(candles_15m) if bar.is_closed)
+    data_through = iso(last_closed.close_time)
     write_notification(new_rows, data_through)
     send_trade_alerts(new_rows)
 
@@ -124,8 +135,12 @@ def main() -> int:
         "open_positions": portfolio.open_positions,
         "event_count": len(portfolio.events),
         "new_event_count": len(new_rows),
-        "bars": {"15m": len(candles_15m), "1h": len(candles_1h), "4h": len(candles_4h)},
-        "implementation_status": "spec_reconstruction_unverified_against_missing_canonical_dataset",
+        "bars": {
+            "15m_closed": sum(bar.is_closed for bar in candles_15m),
+            "1h_closed": sum(bar.is_closed for bar in candles_1h),
+            "4h_closed": sum(bar.is_closed for bar in candles_4h),
+        },
+        "implementation_status": "canonical_signal_tradebooks_reproduced_live_allocator_causal",
         "spec_sha256": actual_sha,
         "real_orders_enabled": False,
     }

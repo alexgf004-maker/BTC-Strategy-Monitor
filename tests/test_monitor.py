@@ -5,17 +5,18 @@ import io
 import math
 import unittest
 import zipfile
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
 from monitor.indicators import zscore_prior
-from monitor.market import _parse_archive, resample
+from monitor.market import _parse_archive, fetch_15m_realtime, resample
 from monitor.models import Candle, CandidateTrade
 from monitor.notify import _format_entry, send_trade_alerts
 from monitor.portfolio import allocate_portfolio
 from monitor.service import seconds_until_next_run
-from monitor.strategies import FORWARD_START_MS, generate_a
+from monitor.strategies import FORWARD_START_MS, _long_exit, generate_a, support_touch_events
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -80,6 +81,44 @@ class CausalityTests(unittest.TestCase):
         self.assertEqual(result[0].open, bars[0].open)
         self.assertEqual(result[0].close, bars[3].close)
 
+    def test_resample_exposes_only_the_partial_tail_as_an_entry_stub(self):
+        start = FORWARD_START_MS
+        bars = [candle(start + i * FIFTEEN, 100 + i) for i in range(4)]
+        bars[-1] = replace(bars[-1], is_closed=False)
+        self.assertEqual(resample(bars, 1), [])
+        result = resample(bars, 1, include_partial=True)
+        self.assertEqual(len(result), 1)
+        self.assertFalse(result[0].is_closed)
+        self.assertEqual(result[0].open_time, start)
+        self.assertEqual(result[0].open, bars[0].open)
+
+    def test_partial_entry_bar_cannot_close_a_trade_early(self):
+        bar = replace(candle(FORWARD_START_MS, 100.0), high=200.0, low=50.0, is_closed=False)
+        exit_i, exit_price, reason = _long_exit([bar], 0, 98.0, 104.0, 0)
+        self.assertIsNone(exit_i)
+        self.assertIsNone(exit_price)
+        self.assertEqual(reason, "open")
+
+    def test_support_catalog_counts_interactions_and_ignores_partial_bar(self):
+        lows = [103.0, 102.0, 101.0, 100.0, 101.0, 102.0, 103.0]
+        bars = [
+            Candle(i * HOUR, (i + 1) * HOUR - 1, low + 0.5, low + 1.0, low, low + 0.5, 1.0, 1, 0.5)
+            for i, low in enumerate(lows)
+        ]
+        for i in range(7, 20):
+            touch = i in (7, 10, 13, 16, 19)
+            low = 100.1 if touch else 101.0
+            bars.append(Candle(
+                i * HOUR, (i + 1) * HOUR - 1, low + 0.4, low + 0.6, low, low + 0.4,
+                1.0, 1, 0.5, is_closed=i != 19,
+            ))
+        events = support_touch_events(bars, {"atr": [1.0] * len(bars)})
+        self.assertEqual(events[8 * HOUR], 1)
+        self.assertEqual(events[11 * HOUR], 2)
+        self.assertEqual(events[14 * HOUR], 3)
+        self.assertEqual(events[17 * HOUR], 4)
+        self.assertNotIn(20 * HOUR, events)
+
     def test_engine_a_enters_on_next_bar(self):
         bars = []
         for i in range(240):
@@ -106,6 +145,24 @@ class CausalityTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0].open_time, 1788220800000)
         self.assertEqual(rows[0].close_time, 1788221699999)
+
+    @patch("monitor.market._request")
+    @patch("monitor.market.time.time")
+    def test_realtime_fetch_keeps_one_current_kline_for_next_open(self, now, request):
+        start = FORWARD_START_MS
+        now_ms = start + 800 * FIFTEEN + 30_000
+        now.return_value = now_ms / 1000
+        request.return_value = [
+            [
+                start + i * FIFTEEN, "100", "101", "99", "100.5", "10",
+                start + (i + 1) * FIFTEEN - 1, "0", 100, "5", "0", "0",
+            ]
+            for i in range(801)
+        ]
+        rows = fetch_15m_realtime(start, now_ms)
+        self.assertEqual(len(rows), 801)
+        self.assertTrue(rows[-2].is_closed)
+        self.assertFalse(rows[-1].is_closed)
 
 
 class RiskManagerTests(unittest.TestCase):
@@ -138,6 +195,14 @@ class RiskManagerTests(unittest.TestCase):
         entry = next(e for e in result.events if e["event_type"] == "ENTRY")
         self.assertEqual(entry["stop"], 98.0)
         self.assertEqual(entry["target"], 104.0)
+
+    def test_entry_event_id_does_not_change_when_exit_becomes_known(self):
+        t = FORWARD_START_MS
+        open_result = allocate_portfolio([candidate("B", t)])
+        closed_result = allocate_portfolio([candidate("B", t, t + HOUR, 1.5)])
+        open_entry = next(e for e in open_result.events if e["event_type"] == "ENTRY")
+        closed_entry = next(e for e in closed_result.events if e["event_type"] == "ENTRY")
+        self.assertEqual(open_entry["event_id"], closed_entry["event_id"])
 
 
 class TelegramAlertTests(unittest.TestCase):

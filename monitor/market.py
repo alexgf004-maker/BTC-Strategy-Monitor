@@ -80,12 +80,11 @@ def fetch_15m_realtime(start_ms: int, end_ms: int | None = None) -> list[Candle]
             break
         for item in batch:
             close_time = int(item[6])
-            if close_time >= now_ms:
-                continue
             rows.append(Candle(
                 open_time=int(item[0]), close_time=close_time,
                 open=float(item[1]), high=float(item[2]), low=float(item[3]), close=float(item[4]),
                 volume=float(item[5]), number_trades=int(item[8]), taker_buy_volume=float(item[9]),
+                is_closed=close_time < now_ms,
             ))
         next_cursor = int(batch[-1][0]) + INTERVAL_MS
         if next_cursor <= cursor or len(batch) < 1500:
@@ -95,7 +94,7 @@ def fetch_15m_realtime(start_ms: int, end_ms: int | None = None) -> list[Candle]
     unique = {bar.open_time: bar for bar in rows}
     candles = [unique[key] for key in sorted(unique)]
     if len(candles) < 800:
-        raise DataUnavailable(f"Only {len(candles)} closed 15m candles were returned; at least 800 are required.")
+        raise DataUnavailable(f"Only {len(candles)} 15m candles were returned; at least 800 are required.")
     return candles
 
 
@@ -215,7 +214,7 @@ def fetch_15m(start_ms: int, end_ms: int | None = None) -> MarketFetch:
         return MarketFetch(candles, "binance_vision_official_delayed", str(realtime_error))
 
 
-def resample(candles: list[Candle], hours: int) -> list[Candle]:
+def resample(candles: list[Candle], hours: int, include_partial: bool = False) -> list[Candle]:
     bucket_ms = hours * 60 * 60 * 1000
     expected = hours * 4
     grouped: dict[int, list[Candle]] = defaultdict(list)
@@ -224,10 +223,20 @@ def resample(candles: list[Candle], hours: int) -> list[Candle]:
         grouped[bucket].append(candle)
 
     result: list[Candle] = []
-    for start in sorted(grouped):
+    starts = sorted(grouped)
+    for start in starts:
         bars = sorted(grouped[start], key=lambda b: b.open_time)
         expected_times = [start + i * INTERVAL_MS for i in range(expected)]
-        if len(bars) != expected or [b.open_time for b in bars] != expected_times:
+        actual_times = [b.open_time for b in bars]
+        complete = len(bars) == expected and actual_times == expected_times and all(b.is_closed for b in bars)
+        partial_tail = (
+            include_partial
+            and start == starts[-1]
+            and 0 < len(bars) <= expected
+            and actual_times == expected_times[:len(bars)]
+            and not complete
+        )
+        if not complete and not partial_tail:
             continue
         result.append(Candle(
             open_time=start,
@@ -239,5 +248,6 @@ def resample(candles: list[Candle], hours: int) -> list[Candle]:
             volume=sum(b.volume for b in bars),
             number_trades=sum(b.number_trades for b in bars),
             taker_buy_volume=sum(b.taker_buy_volume for b in bars),
+            is_closed=complete,
         ))
     return result
