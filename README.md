@@ -13,7 +13,7 @@ Consulta únicamente velas públicas de Binance USD-M Futures, reconstruye los m
 - El registro forward-OOS comienza el `2026-09-01 00:00 UTC`.
 - El gestor de riesgo aplica los límites congelados: 2% global y 1.25% compartido entre A+C.
 - Los eventos nuevos crean una incidencia de GitHub para facilitar las notificaciones.
-- Si se configuran los secretos `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`, cada nueva **ENTRADA** paper también se envía como mensaje de Telegram.
+- Si se configuran los secretos `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`, cada nueva **ENTRADA** y **SALIDA** paper también se envía como mensaje de Telegram.
 - Una ejecución manual está disponible desde la pestaña **Actions**.
 
 ## Archivos importantes
@@ -21,7 +21,7 @@ Consulta únicamente velas públicas de Binance USD-M Futures, reconstruye los m
 - `strategy_suite_v1_FINAL.json`: especificación congelada e inmutable.
 - `monitor/market.py`, `monitor/indicators.py` y `monitor/strategies.py`: datos, indicadores y señales.
 - `monitor/portfolio.py`: simulación paper y gestor de riesgo.
-- `monitor/notify.py`: alerta de Telegram para nuevas entradas (best-effort, nunca detiene el monitor).
+- `monitor/notify.py`: alerta de Telegram para nuevas entradas y salidas (best-effort, nunca detiene el monitor).
 - `monitor/runner.py`: ejecución idempotente y escritura de resultados.
 - `monitor/service.py`: proceso persistente, planificador y API de lectura protegida.
 - `deploy/install.sh`: instalación reproducible como servicio `systemd` en Ubuntu.
