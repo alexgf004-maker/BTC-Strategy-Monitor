@@ -15,7 +15,7 @@ from unittest.mock import patch
 from monitor.indicators import zscore_prior
 from monitor.market import _parse_archive, fetch_15m_realtime, resample
 from monitor.models import Candle, CandidateTrade
-from monitor.notify import _format_entry, send_trade_alerts
+from monitor.notify import _format_entry, _position_sizing, send_trade_alerts
 from monitor.portfolio import allocate_portfolio
 from monitor import runner
 from monitor.service import seconds_until_next_run
@@ -257,6 +257,23 @@ class TelegramAlertTests(unittest.TestCase):
         })
         self.assertIn("Stop (precio): 97.5", message)
         self.assertIn("Objetivo (precio): 103.75", message)
+
+    def test_entry_message_includes_conservative_5x_position_sizing(self):
+        row = {
+            "strategy": "B", "side": "long", "entry_price": 79246.0,
+            "stop": 77465.4849061, "target": 81916.77264085,
+            "event_dt": "2026-09-09T08:00:00Z", "planned_risk_frac": 0.00625,
+            "planned_risk_dollars": 4.95516319,
+        }
+        sizing = _position_sizing(row)
+        message = _format_entry(row)
+        self.assertTrue(sizing["valid"])
+        self.assertEqual(str(sizing["quantity"]), "0.002")
+        self.assertIn("Cantidad sugerida: 0.002 BTC", message)
+        self.assertIn("Valor de posición: 158.49 USDT", message)
+        self.assertIn("Margen estimado a 5x: 31.70 USDT", message)
+        self.assertIn("Pérdida al stop con esa cantidad: 3.56 USD", message)
+        self.assertIn("sin comisiones", message)
 
     def test_entry_message_states_time_exit_when_no_target(self):
         message = _format_entry({

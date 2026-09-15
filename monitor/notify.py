@@ -5,9 +5,13 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from decimal import Decimal, ROUND_DOWN
 
 
 TELEGRAM_API = "https://api.telegram.org/bot{token}/sendMessage"
+DISPLAY_LEVERAGE = Decimal("5")
+BTC_QTY_STEP = Decimal("0.001")
+BTC_MIN_NOTIONAL = Decimal("50")
 
 # Human-readable time-based exit rule per engine, straight from the frozen spec.
 TIME_EXIT_TEXT = {
@@ -18,6 +22,27 @@ TIME_EXIT_TEXT = {
 }
 
 
+def _position_sizing(row: dict) -> dict[str, Decimal | bool]:
+    """Translate stop-risk dollars into a conservative, exchange-sized position."""
+    entry = Decimal(str(row["entry_price"]))
+    stop = Decimal(str(row["stop"]))
+    risk = Decimal(str(row["planned_risk_dollars"]))
+    distance = abs(entry - stop)
+    if entry <= 0 or distance <= 0 or risk <= 0:
+        return {"valid": False}
+    theoretical_qty = risk / distance
+    quantity = (theoretical_qty / BTC_QTY_STEP).to_integral_value(rounding=ROUND_DOWN) * BTC_QTY_STEP
+    notional = quantity * entry
+    return {
+        "valid": quantity >= BTC_QTY_STEP and notional >= BTC_MIN_NOTIONAL,
+        "theoretical_qty": theoretical_qty,
+        "quantity": quantity,
+        "notional": notional,
+        "margin": notional / DISPLAY_LEVERAGE,
+        "stop_loss": quantity * distance,
+    }
+
+
 def _format_entry(row: dict) -> str:
     risk_pct = float(row["planned_risk_frac"]) * 100 if row["planned_risk_frac"] != "" else 0.0
     time_exit = TIME_EXIT_TEXT.get(row["strategy"], "según la regla de la estrategia")
@@ -25,13 +50,27 @@ def _format_entry(row: dict) -> str:
         exit_plan = f"Objetivo (precio): {row['target']}\nSalida por tiempo: {time_exit}"
     else:
         exit_plan = f"Objetivo: sin precio fijo — sale por tiempo: {time_exit}"
+    sizing = _position_sizing(row)
+    if sizing["valid"]:
+        sizing_text = (
+            f"Cantidad sugerida: {sizing['quantity']:.3f} BTC (redondeada hacia abajo)\n"
+            f"Valor de posición: {sizing['notional']:.2f} USDT\n"
+            f"Margen estimado a {DISPLAY_LEVERAGE:.0f}x: {sizing['margin']:.2f} USDT\n"
+            f"Pérdida al stop con esa cantidad: {sizing['stop_loss']:.2f} USD, sin comisiones"
+        )
+    else:
+        sizing_text = (
+            "Tamaño sugerido: inferior al mínimo operable de BTCUSDT; "
+            "no abrir manualmente sin recalcular."
+        )
     return (
         f"\U0001F7E2 ENTRADA {row['strategy']} ({row['side']})\n"
         f"Precio: {row['entry_price']}\n"
         f"Stop (precio): {row['stop']}\n"
         f"{exit_plan}\n"
         f"Fecha UTC: {row['event_dt']}\n"
-        f"Riesgo: {risk_pct:.3f}% ({row['planned_risk_dollars']} USD)\n"
+        f"Riesgo máximo: {risk_pct:.3f}% ({row['planned_risk_dollars']} USD), sin comisiones\n"
+        f"{sizing_text}\n"
         "Simulación paper. No se ejecutó ninguna orden real."
     )
 
