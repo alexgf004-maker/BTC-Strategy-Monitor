@@ -2,6 +2,8 @@ name: Adhoc entry gap stats
 
 on:
   workflow_dispatch:
+  push:
+    branches: [scratch/entry-gap-stats]
 
 jobs:
   gap-stats:
