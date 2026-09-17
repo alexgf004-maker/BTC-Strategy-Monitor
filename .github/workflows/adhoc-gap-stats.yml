@@ -1,0 +1,20 @@
+name: Adhoc entry gap stats
+
+on:
+  workflow_dispatch:
+
+jobs:
+  gap-stats:
+    runs-on: self-hosted
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compute historical entry-gap statistics
+        run: python tools/entry_gap_stats.py
