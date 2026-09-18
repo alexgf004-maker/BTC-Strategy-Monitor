@@ -1,3 +1,37 @@
 {
-  "items": []
+  "items": [
+    {
+      "attempts": 1,
+      "created_utc": "2026-09-18T14:23:50.063281Z",
+      "event": {
+        "R": "",
+        "count_ratio": 9.057172,
+        "entry_dt": "2026-09-18T14:00:00Z",
+        "entry_price": 80046.5,
+        "equity_after": 780.15494084,
+        "event_dt": "2026-09-18T14:00:00Z",
+        "event_id": "7d52579487a10d5873eb",
+        "event_type": "ENTRY",
+        "exit_dt": "",
+        "exit_price": "",
+        "planned_risk_dollars": 5.85116206,
+        "planned_risk_frac": 0.0075,
+        "reason": "open",
+        "side": "long",
+        "signal_dt": "2026-09-18T13:59:59.999000Z",
+        "sr_context": "false",
+        "status": "paper",
+        "stop": 78932.00353933,
+        "strategy": "C",
+        "taker_share": 0.536707,
+        "target": 83389.989382,
+        "volume_ratio": 11.689281
+      },
+      "event_id": "7d52579487a10d5873eb",
+      "last_attempt_utc": "2026-09-18T14:23:50.063778Z",
+      "last_error": null,
+      "sent_utc": "2026-09-18T14:23:50.268758Z",
+      "status": "sent"
+    }
+  ]
 }
