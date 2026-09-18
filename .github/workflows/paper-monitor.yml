@@ -43,12 +43,12 @@ jobs:
 
       - name: Open one notification for new events
         if: hashFiles('runtime/new_events.md') != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
         run: |
-          title=$(head -n 1 runtime/new_events.md | sed 's/^# //')
-          gh issue create --title "$title" --body-file runtime/new_events.md --label paper-signal || \
-            gh issue create --title "$title" --body-file runtime/new_events.md
+          python tools/post_new_events_issue.py
           rm -f runtime/new_events.md
 
       - name: Persist paper registry and health
