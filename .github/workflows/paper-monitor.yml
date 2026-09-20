@@ -1,8 +1,12 @@
 name: BTC paper monitor
 
 on:
+  # Safety net only: the VPS's own cron drives workflow_dispatch every 15
+  # minutes and is the primary trigger. This fires once an hour, offset away
+  # from the VPS's :03/:18/:33/:48 pattern, so it almost never races the same
+  # cycle and only matters if the VPS itself goes down.
   schedule:
-    - cron: "2,17,32,47 * * * *"
+    - cron: "50 * * * *"
   workflow_dispatch:
   push:
     branches: [main]
@@ -59,10 +63,23 @@ jobs:
           git add runtime/
           if git diff --cached --quiet; then
             echo "No tracked state changes."
-          else
-            git commit -m "chore: update paper monitor state [skip ci]"
-            git push
+            exit 0
           fi
+          git commit -m "chore: update paper monitor state [skip ci]"
+          # A second trigger (schedule as well as workflow_dispatch) can land
+          # close enough to race this push. Rebase onto whatever landed first
+          # and retry instead of failing the run and losing this state.
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt); rebasing onto origin/main and retrying."
+            git fetch origin main
+            git rebase origin/main
+            sleep $((attempt * 2))
+          done
+          echo "::error::Could not push paper monitor state after 5 attempts."
+          exit 1
 
       - name: Fail workflow after state is preserved
         if: steps.monitor.outcome == 'failure'
