@@ -15,13 +15,13 @@
   "event_count": 16,
   "health": "ok",
   "implementation_status": "canonical_signal_tradebooks_reproduced_live_allocator_causal",
-  "last_success_utc": "2026-09-21T17:03:11.197318Z",
+  "last_success_utc": "2026-09-21T17:12:37.424272Z",
   "market": "Binance USD-M Futures BTCUSDT",
   "mode": "paper",
   "new_event_count": 0,
   "open_positions": [
     {
-      "current_R": 2.303994,
+      "current_R": 2.427441,
       "entry_dt": "2026-09-21T09:00:00Z",
       "entry_price": 83717.3,
       "planned_risk_dollars": 5.88911552,
@@ -33,7 +33,7 @@
       "target": null
     },
     {
-      "current_R": 0.439969,
+      "current_R": 0.506006,
       "entry_dt": "2026-09-21T09:45:00Z",
       "entry_price": 84990.0,
       "planned_risk_dollars": 3.92607702,
