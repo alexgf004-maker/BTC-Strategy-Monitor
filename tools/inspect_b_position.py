@@ -19,7 +19,7 @@ def iso(ms: int) -> str:
 
 
 def main() -> int:
-    start_ms = int(datetime(2026, 9, 19, tzinfo=timezone.utc).timestamp() * 1000)
+    start_ms = int(datetime(2026, 5, 1, tzinfo=timezone.utc).timestamp() * 1000)
     fetch = fetch_15m(start_ms)
     candles_15m = fetch.candles
     candles_4h_closed = resample(candles_15m, 4, include_partial=False)
