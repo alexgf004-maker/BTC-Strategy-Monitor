@@ -2,38 +2,26 @@
   "alert_delivery": {
     "last_error": null,
     "pending_count": 0,
-    "sent_count": 5
+    "sent_count": 6
   },
   "bars": {
-    "15m_closed": 13775,
-    "1h_closed": 3443,
-    "4h_closed": 860
+    "15m_closed": 13776,
+    "1h_closed": 3444,
+    "4h_closed": 861
   },
   "data_source": "binance_futures_realtime",
-  "data_through_utc": "2026-09-21T11:44:59.999000Z",
+  "data_through_utc": "2026-09-21T11:59:59.999000Z",
   "data_warning": null,
-  "event_count": 15,
+  "event_count": 16,
   "health": "ok",
   "implementation_status": "canonical_signal_tradebooks_reproduced_live_allocator_causal",
-  "last_success_utc": "2026-09-21T11:48:12.856151Z",
+  "last_success_utc": "2026-09-21T12:03:11.520603Z",
   "market": "Binance USD-M Futures BTCUSDT",
   "mode": "paper",
-  "new_event_count": 0,
+  "new_event_count": 1,
   "open_positions": [
     {
-      "current_R": 1.833352,
-      "entry_dt": "2026-09-20T16:00:00Z",
-      "entry_price": 80871.4,
-      "planned_risk_dollars": 3.92607702,
-      "planned_risk_frac": 0.005,
-      "side": "long",
-      "sr_context": false,
-      "stop": 78876.36055403,
-      "strategy": "B",
-      "target": 83863.95916895
-    },
-    {
-      "current_R": 0.934705,
+      "current_R": 1.202966,
       "entry_dt": "2026-09-21T09:00:00Z",
       "entry_price": 83717.3,
       "planned_risk_dollars": 5.88911552,
@@ -45,7 +33,7 @@
       "target": null
     },
     {
-      "current_R": -0.292522,
+      "current_R": -0.149018,
       "entry_dt": "2026-09-21T09:45:00Z",
       "entry_price": 84990.0,
       "planned_risk_dollars": 3.92607702,
@@ -58,7 +46,7 @@
     }
   ],
   "real_orders_enabled": false,
-  "realized_equity": 785.21540306,
+  "realized_equity": 790.72256242,
   "spec_sha256": "5c601cfb71993c09bd6c512108cb20c5a85f785d2800298a014f77afad29c908",
   "start_equity": 800.0,
   "suite_id": "BTCUSDT_Strategy_Suite_v1.0_FINAL"
