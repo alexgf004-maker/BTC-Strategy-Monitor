@@ -1,0 +1,22 @@
+name: Adhoc inspect B position
+
+on:
+  push:
+    branches: [scratch/inspect-b-position]
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: self-hosted
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Inspect open B position against real candles
+        run: python tools/inspect_b_position.py
