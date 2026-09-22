@@ -65,17 +65,33 @@ jobs:
             echo "No tracked state changes."
             exit 0
           fi
+          # Keep this run's freshly computed runtime/ snapshot outside git
+          # history so a colliding push can be retried by reapplying it
+          # cleanly on top of whatever landed first. A rebase would try to
+          # merge line-by-line and can genuinely conflict, since both sides
+          # fully rewrite the same JSON/CSV files with slightly different
+          # values (e.g. timestamps) rather than making independent edits.
+          backup=$(mktemp -d)
+          cp -r runtime "$backup/runtime"
           git commit -m "chore: update paper monitor state [skip ci]"
           # A second trigger (schedule as well as workflow_dispatch) can land
-          # close enough to race this push. Rebase onto whatever landed first
-          # and retry instead of failing the run and losing this state.
+          # close enough to race this push. Retry instead of failing the run
+          # and losing this state.
           for attempt in 1 2 3 4 5; do
             if git push; then
               exit 0
             fi
-            echo "Push rejected (attempt $attempt); rebasing onto origin/main and retrying."
+            echo "Push rejected (attempt $attempt); reapplying this run's state onto origin/main and retrying."
             git fetch origin main
-            git rebase origin/main
+            git reset --hard origin/main
+            rm -rf runtime
+            cp -r "$backup/runtime" runtime
+            git add runtime/
+            if git diff --cached --quiet; then
+              echo "origin/main already carries this run's state."
+              exit 0
+            fi
+            git commit -m "chore: update paper monitor state [skip ci]"
             sleep $((attempt * 2))
           done
           echo "::error::Could not push paper monitor state after 5 attempts."
