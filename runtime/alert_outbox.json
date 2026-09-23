@@ -230,6 +230,39 @@
       "last_error": null,
       "sent_utc": "2026-09-21T17:48:24.894573Z",
       "status": "sent"
+    },
+    {
+      "attempts": 1,
+      "created_utc": "2026-09-23T21:03:25.154747Z",
+      "event": {
+        "R": 0.3253713055,
+        "count_ratio": 6.021004,
+        "entry_dt": "2026-09-21T09:00:00Z",
+        "entry_price": 83717.3,
+        "equity_after": 794.23874924,
+        "event_dt": "2026-09-23T20:59:59.999000Z",
+        "event_id": "95612a3b8e6bf4636247",
+        "event_type": "EXIT",
+        "exit_dt": "2026-09-23T20:59:59.999000Z",
+        "exit_price": 84198.4,
+        "planned_risk_dollars": 5.88911552,
+        "planned_risk_frac": 0.0075,
+        "reason": "time",
+        "side": "long",
+        "signal_dt": "2026-09-21T08:59:59.999000Z",
+        "sr_context": "false",
+        "status": "paper",
+        "stop": 82856.19616187,
+        "strategy": "A",
+        "taker_share": 0.591128,
+        "target": "",
+        "volume_ratio": 8.069994
+      },
+      "event_id": "95612a3b8e6bf4636247",
+      "last_attempt_utc": "2026-09-23T21:03:25.156047Z",
+      "last_error": null,
+      "sent_utc": "2026-09-23T21:03:25.947623Z",
+      "status": "sent"
     }
   ]
 }
