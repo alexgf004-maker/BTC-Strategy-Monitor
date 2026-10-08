@@ -15,7 +15,7 @@
   "event_count": 28,
   "health": "ok",
   "implementation_status": "canonical_signal_tradebooks_reproduced_live_allocator_causal",
-  "last_success_utc": "2026-10-08T02:17:44.531138Z",
+  "last_success_utc": "2026-10-08T02:18:11.915638Z",
   "market": "Binance USD-M Futures BTCUSDT",
   "mode": "paper",
   "new_event_count": 0,
