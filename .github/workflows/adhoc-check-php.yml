@@ -1,0 +1,19 @@
+name: Adhoc check PHP exposure
+
+on:
+  push:
+    branches: [scratch/check-php]
+
+jobs:
+  check:
+    runs-on: self-hosted
+    timeout-minutes: 5
+    steps:
+      - name: Read-only host inspection
+        run: |
+          echo "== OS =="; lsb_release -ds 2>/dev/null || head -2 /etc/os-release
+          echo "== php binary =="; command -v php || echo "php: not installed"
+          echo "== php packages =="; (dpkg -l | grep -i php) || echo "no php packages"
+          echo "== web servers =="; (dpkg -l | grep -Ei 'apache2|nginx|php-fpm|lighttpd' ) || echo "no web server packages"
+          echo "== listening TCP ports =="; ss -tln
+          echo "== upgradable packages (security) =="; apt list --upgradable 2>/dev/null | grep -i security | head -20 || true
