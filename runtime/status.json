@@ -5,17 +5,17 @@
     "sent_count": 20
   },
   "bars": {
-    "15m_closed": 16904,
-    "1h_closed": 4226,
-    "4h_closed": 1056
+    "15m_closed": 16926,
+    "1h_closed": 4231,
+    "4h_closed": 1057
   },
   "data_source": "binance_futures_realtime",
-  "data_through_utc": "2026-10-24T01:59:59.999000Z",
+  "data_through_utc": "2026-10-24T07:29:59.999000Z",
   "data_warning": null,
   "event_count": 30,
   "health": "ok",
   "implementation_status": "canonical_signal_tradebooks_reproduced_live_allocator_causal",
-  "last_success_utc": "2026-10-24T02:00:32.642794Z",
+  "last_success_utc": "2026-10-24T07:36:57.364427Z",
   "market": "Binance USD-M Futures BTCUSDT",
   "mode": "paper",
   "new_event_count": 0,
